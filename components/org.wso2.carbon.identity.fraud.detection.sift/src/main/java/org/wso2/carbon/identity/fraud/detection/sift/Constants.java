@@ -18,69 +18,11 @@
 
 package org.wso2.carbon.identity.fraud.detection.sift;
 
-/**
- * Constants class to hold the constants used in the Sift connector.
- */
 public class Constants {
 
     private Constants() {
     }
 
-    public static final String SIFT_API_URL = "https://api.sift.com/v205/events?abuse_types=account_takeover";
-    public static final String RETURN_SCORE_PARAM = "&return_score=true";
-
-    // Connector configs.
-    public static final String SIFT_ACCOUNT_ID_PROP = "sift.account.id";
-    public static final String SIFT_ACCOUNT_ID_PROP_NAME = "Account ID";
-    public static final String SIFT_ACCOUNT_ID_PROP_DESC =  "Account id of the Sift account.";
-    // __secret__ prefix is used to mark the property as confidential for UI rendering.
-    public static final String SIFT_API_KEY_PROP = "__secret__.sift.api.key";
-    public static final String SIFT_API_KEY_PROP_NAME = "API Key";
-    public static final String SIFT_API_KEY_PROP_DESC = "API key of the Sift account.";
-    public static final String CONNECTOR_NAME = "sift-configuration";
-    public static final String CONNECTOR_FRIENDLY_NAME = "Sift Configuration";
-    public static final String CONNECTOR_CATEGORY = "Other Settings";
-    public static final String CONNECTOR_SUB_CATEGORY = "DEFAULT";
-    public static final int CONNECTOR_ORDER = 0;
-
-    // HTTP Client configs.
-    // Timeouts in milliseconds.
-    public static final int CONNECTION_TIMEOUT = 5000;
-    public static final int CONNECTION_REQUEST_TIMEOUT = 5000;
-    public static final int READ_TIMEOUT = 5000;
-
-    // Identity configs.
-    public static final String CONNECTION_TIMEOUT_CONFIG = "Sift.HTTPClient.ConnectionTimeout";
-    public static final String CONNECTION_REQUEST_TIMEOUT_CONFIG = "Sift.HTTPClient.ConnectionRequestTimeout";
-    public static final String READ_TIMEOUT_CONFIG = "Sift.HTTPClient.ReadTimeout";
-
-    public static final String TYPE = "$type";
-    public static final String LOGIN_TYPE = "$login";
-    public static final String API_KEY = "$api_key";
-    // Supported param keys.
-    public static final String LOGIN_STATUS = "login_status";
-    public static final String USER_ID_KEY = "$user_id";
-    public static final String SESSION_ID_KEY = "$session_id";
-    public static final String IP_KEY = "$ip";
-    public static final String BROWSER_KEY = "$browser";
-    public static final String USER_AGENT_KEY = "$user_agent";
-
-    public static final int SIFT_STATUS_OK = 0;
-    public static final String SIFT_STATUS = "status";
-    public static final String SIFT_SCORE_RESPONSE = "score_response";
-    public static final String SIFT_SCORES = "scores";
-    public static final String SIFT_ACCOUNT_TAKEOVER = "account_takeover";
-    public static final String SIFT_SCORE = "score";
-
-    public static final String HTTP_SERVLET_REQUEST = "HttpServletRequest";
-    public static final String USER_AGENT_HEADER = "User-Agent";
-    public static final String CURRENT_KNOWN_SUBJECT = "currentKnownSubject";
-
-    public static final String LOGGING_ENABLED = "loggingEnabled";
-
-    /**
-     * Enum to hold the login status.
-     */
     public enum LoginStatus {
 
         LOGIN_SUCCESS("LOGIN_SUCCESS", "$success"),

@@ -20,7 +20,6 @@ package org.wso2.carbon.identity.fraud.detection.sift.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -31,19 +30,12 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.authentication.framework.JsFunctionRegistry;
 import org.wso2.carbon.identity.core.util.IdentityCoreInitializedEvent;
-import org.wso2.carbon.identity.fraud.detection.sift.HttpClientManager;
-import org.wso2.carbon.identity.fraud.detection.sift.SiftConfigConnector;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunction;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunctionImpl;
-import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.PublishLoginToSiftFunction;
-import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.PublishLoginToSiftFunctionImpl;
-import org.wso2.carbon.identity.fraud.detection.sift.models.ConnectionConfig;
+import org.wso2.carbon.identity.fraud.detection.sift.SiftConfigConnector;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
 
-/**
- * Service component for Sift.
- */
 @Component(
         name = "identity.fraud.detection.sift.component",
         immediate = true
@@ -51,29 +43,26 @@ import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
 public class SiftServiceComponent {
 
     public static final String FUNC_CALL_SIFT = "getSiftRiskScoreForLogin";
-    public static final String FUNC_PUBLISH_LOGIN_TO_SIFT = "publishLoginEventInfoToSift";
     private static final Log LOG = LogFactory.getLog(SiftServiceComponent.class);
-    private CloseableHttpClient httpClient;
 
     @Activate
     protected void activate(ComponentContext context) {
 
         try {
-            ConnectionConfig connectionConfig = new ConnectionConfig.Builder().build();
-            httpClient = HttpClientManager.getInstance().getHttpClient(connectionConfig);
-            JsFunctionRegistry jsFunctionRegistry = SiftDataHolder.getInstance().getJsFunctionRegistry();
-            CallSiftOnLoginFunction getSiftRiskScoreForLogin = new CallSiftOnLoginFunctionImpl(httpClient);
-            PublishLoginToSiftFunction publishLoginToSiftFunction = new PublishLoginToSiftFunctionImpl(httpClient);
+            System.out.println("Inside the SiftServiceComponent activate method");
+            JsFunctionRegistry jsFunctionRegistry = SiftDataHolder.getInstance()
+                    .getJsFunctionRegistry();
+            System.out.println("JsFunctionRegistry:obtained");
+            CallSiftOnLoginFunction getSiftRiskScoreForLogin = new CallSiftOnLoginFunctionImpl();
             jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, FUNC_CALL_SIFT,
                     getSiftRiskScoreForLogin);
-            jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, FUNC_PUBLISH_LOGIN_TO_SIFT,
-                    publishLoginToSiftFunction);
 
             BundleContext bundleContext = context.getBundleContext();
             SiftConfigConnector siftConfigConnector = new SiftConfigConnector();
             bundleContext.registerService(IdentityConnectorConfig.class.getName(), siftConfigConnector, null);
+
         } catch (Throwable e) {
-            LOG.error("Error while activating SiftServiceComponent.", e);
+            LOG.error("Error while activating AnalyticsFunctionsServiceComponent.", e);
         }
     }
 
@@ -84,11 +73,6 @@ public class SiftServiceComponent {
                 .getJsFunctionRegistry();
         if (jsFunctionRegistry != null) {
             jsFunctionRegistry.deRegister(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, FUNC_CALL_SIFT);
-            jsFunctionRegistry.deRegister(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, FUNC_PUBLISH_LOGIN_TO_SIFT);
-        }
-
-        if (httpClient != null) {
-            HttpClientManager.getInstance().closeHttpClient(httpClient);
         }
     }
 

@@ -23,20 +23,15 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.wso2.carbon.identity.fraud.detection.sift.models.ConnectionConfig;
 
 import java.io.IOException;
 
-/**
- * HttpClientManager class to manage HttpClient instances.
- */
 public class HttpClientManager {
 
     private static final Log LOG = LogFactory.getLog(HttpClientManager.class);
     private static final HttpClientManager instance = new HttpClientManager();
 
     private HttpClientManager() {
-
     }
 
     public static HttpClientManager getInstance() {
@@ -44,9 +39,9 @@ public class HttpClientManager {
         return instance;
     }
 
-    public CloseableHttpClient getHttpClient(ConnectionConfig connectionConfig) {
+    public CloseableHttpClient getHttpClient() {
 
-        return HttpClientBuilder.create().setDefaultRequestConfig(getRequestConfig(connectionConfig)).build();
+        return HttpClientBuilder.create().build();
     }
 
     public void closeHttpClient(CloseableHttpClient httpClient) {
@@ -58,14 +53,15 @@ public class HttpClientManager {
         }
     }
 
-    private RequestConfig getRequestConfig(ConnectionConfig connectionConfig) {
+//    private RequestConfig getRequestConfig() {
+//
+//        RequestConfig config = RequestConfig.custom()
+//                .setConnectTimeout(ConfigProvider.getInstance().getConnectionTimeout())
+//                .setConnectionRequestTimeout(ConfigProvider.getInstance().getConnectionRequestTimeout())
+//                .setSocketTimeout(ConfigProvider.getInstance().getReadTimeout())
+//                .setRedirectsEnabled(false)
+//                .setRelativeRedirectsAllowed(false)
+//                .build();
+//    }
 
-        return RequestConfig.custom()
-                .setConnectTimeout(connectionConfig.getConnectionTimeout())
-                .setConnectionRequestTimeout(connectionConfig.getConnectionRequestTimeout())
-                .setSocketTimeout(connectionConfig.getReadTimeout())
-                .setRedirectsEnabled(false)
-                .setRelativeRedirectsAllowed(false)
-                .build();
-    }
 }

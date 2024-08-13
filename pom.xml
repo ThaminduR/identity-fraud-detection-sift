@@ -28,11 +28,11 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.wso2.carbon.identity.fraud.sift</groupId>
-    <artifactId>identity-fraud-sift</artifactId>
+    <groupId>org.wso2.carbon.identity.fraud.detection.sift</groupId>
+    <artifactId>identity-fraud-detection-sift</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>WSO2 Carbon - Identity Fraud Sift</name>
+    <name>WSO2 Carbon - Identity Fraud Detection Sift</name>
     <url>http://wso2.org</url>
 
     <scm>
@@ -43,7 +43,7 @@
     </scm>
 
     <modules>
-        <module>components/org.wso2.carbon.identity.fraud.sift.conditional.auth.functions</module>
+        <module>components/org.wso2.carbon.identity.fraud.detection.sift</module>
     </modules>
 
     <dependencyManagement>
@@ -74,19 +74,9 @@
                 <version>${wso2.pax.logging.api.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.httpcomponents.wso2</groupId>
-                <artifactId>httpcore</artifactId>
-                <version>${httpcore.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.wso2.orbit.org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>${httpclient.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.orbit.org.apache.httpcomponents</groupId>
-                <artifactId>httpasyncclient</artifactId>
-                <version>${httpasyncclient.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.governance</groupId>
@@ -309,8 +299,6 @@
         <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
         <maven.checkstyleplugin.version>3.1.0</maven.checkstyleplugin.version>
         <jacoco.version>0.8.4</jacoco.version>
-        <httpcore.version>4.4.14.wso2v1</httpcore.version>
-        <httpcore.version.osgi.import.range>[4.4, 5.0)</httpcore.version.osgi.import.range>
         <httpclient.version>4.5.13.wso2v1</httpclient.version>
         <mockito.version>1.10.19</mockito.version>
         <org.osgi.service.imp.pkg.version>[1.2,2)</org.osgi.service.imp.pkg.version>

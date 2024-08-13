@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.fraud.detection.sift;
 
+import org.wso2.carbon.identity.application.common.model.Property;
+import org.wso2.carbon.identity.governance.IdentityGovernanceException;
+import org.wso2.carbon.identity.governance.IdentityMgtConstants;
 import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
 
 import java.util.ArrayList;
@@ -26,55 +29,51 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_CATEGORY;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_FRIENDLY_NAME;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_NAME;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_ORDER;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_SUB_CATEGORY;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_KEY_PROP;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_KEY_PROP_DESC;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_KEY_PROP_NAME;
+import static org.wso2.carbon.identity.governance.IdentityGovernanceUtil.getPropertyObject;
 
-/**
- * Sift Config Connector containing the configurations required for integrating with Sift.
- */
 public class SiftConfigConnector implements IdentityConnectorConfig {
+
+    private static final String SIFT_ACCOUNT_ID = "sift.account.id";
+    // __secret__ prefix is used to mark the property as confidential for UI rendering.
+    private static final String SIFT_API_KEY = "__secret__.sift.api.key";
 
     @Override
     public String getName() {
 
-        return CONNECTOR_NAME;
+        return "sift-config";
     }
 
     @Override
     public String getFriendlyName() {
 
-        return CONNECTOR_FRIENDLY_NAME;
+        return "Sift Configurations";
     }
 
     @Override
     public String getCategory() {
 
-        return CONNECTOR_CATEGORY;
+        return "Other Settings";
     }
 
     @Override
     public String getSubCategory() {
 
-        return CONNECTOR_SUB_CATEGORY;
+        return "DEFAULT";
     }
 
     @Override
     public int getOrder() {
 
-        return CONNECTOR_ORDER;
+        return 0;
     }
 
     @Override
     public Map<String, String> getPropertyNameMapping() {
 
         Map<String, String> mapping = new HashMap<>();
-        mapping.put(SIFT_API_KEY_PROP, SIFT_API_KEY_PROP_NAME);
+
+        mapping.put(SIFT_ACCOUNT_ID, "Account Id");
+        mapping.put(SIFT_API_KEY, "API Key");
         return mapping;
     }
 
@@ -82,7 +81,9 @@ public class SiftConfigConnector implements IdentityConnectorConfig {
     public Map<String, String> getPropertyDescriptionMapping() {
 
         Map<String, String> mapping = new HashMap<>();
-        mapping.put(SIFT_API_KEY_PROP, SIFT_API_KEY_PROP_DESC);
+
+        mapping.put(SIFT_ACCOUNT_ID, "Account id of the Sift account");
+        mapping.put(SIFT_API_KEY, "API key of the Sift account");
         return mapping;
     }
 
@@ -90,23 +91,26 @@ public class SiftConfigConnector implements IdentityConnectorConfig {
     public String[] getPropertyNames() {
 
         List<String> properties = new ArrayList<>();
-        properties.add(SIFT_API_KEY_PROP);
+        properties.add(SIFT_ACCOUNT_ID);
+        properties.add(SIFT_API_KEY);
         return properties.toArray(new String[0]);
     }
 
     @Override
-    public Properties getDefaultPropertyValues(String tenantDomain) {
+    public Properties getDefaultPropertyValues(String s) throws IdentityGovernanceException {
 
         Map<String, String> defaultProperties = new HashMap<>();
 
-        defaultProperties.put(SIFT_API_KEY_PROP, "");
+        defaultProperties.put(SIFT_ACCOUNT_ID, "");
+        defaultProperties.put(SIFT_API_KEY, "");
+
         Properties properties = new Properties();
         properties.putAll(defaultProperties);
         return properties;
     }
 
     @Override
-    public Map<String, String> getDefaultPropertyValues(String[] propertyNames, String tenantDomain) {
+    public Map<String, String> getDefaultPropertyValues(String[] strings, String s) throws IdentityGovernanceException {
 
         return new HashMap<>();
     }
@@ -115,7 +119,19 @@ public class SiftConfigConnector implements IdentityConnectorConfig {
     public List<String> getConfidentialPropertyValues(String tenantDomain) {
 
         List<String> properties = new ArrayList<>();
-        properties.add(SIFT_API_KEY_PROP);
+        properties.add(SIFT_API_KEY);
         return properties;
+    }
+
+    @Override
+    public Map<String, Property> getMetaData() {
+
+        Map<String, Property> meta = new HashMap<>();
+        meta.put(SIFT_ACCOUNT_ID,
+                getPropertyObject(IdentityMgtConstants.DataTypes.STRING.getValue()));
+//        meta.put(SIFT_API_KEY,
+//                getPropertyObject(IdentityMgtConstants.DataTypes.STRING.getValue()));
+
+        return meta;
     }
 }
