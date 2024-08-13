@@ -16,14 +16,15 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.fraud.sift.conditional.auth.functions;
+package org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions;
 
 import org.graalvm.polyglot.HostAccess;
 import org.json.JSONObject;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.common.model.Property;
-import org.wso2.carbon.identity.fraud.sift.conditional.auth.functions.internal.SiftConditionalFunctionsDataHolder;
+import org.wso2.carbon.identity.fraud.detection.sift.Constants;
+import org.wso2.carbon.identity.fraud.detection.sift.internal.SiftDataHolder;
 import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.governance.bean.ConnectorConfig;
@@ -31,24 +32,19 @@ import org.wso2.carbon.identity.governance.bean.ConnectorConfig;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+
+import static org.wso2.carbon.identity.fraud.detection.sift.Constants.LoginStatus;
 
 public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
 
-//    @Override
-//    @HostAccess.Export
-//    public double getSiftRiskScoreForLogin(JsAuthenticationContext context) {
-//
-//        System.out.println("Inside the CallSiftOnLoginFunctionImpl");
-//        return 0.7;
-//    }
+
 
     @Override
     @HostAccess.Export
     public double getSiftRiskScoreForLogin(JsAuthenticationContext context, String loginStatus, List<String> parameters,
                                            Object... paramMap)  throws FrameworkException{
 
-
+        //loginStatus = login_succes, login_failed, pre_login
         Map<String,String> props = getSiftConfigs(context.getWrapped().getTenantDomain());
 
         // print props
@@ -114,6 +110,19 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
 
     private IdentityGovernanceService getIdentityGovernanceService() {
 
-        return SiftConditionalFunctionsDataHolder.getInstance().getIdentityGovernanceService();
+        return SiftDataHolder.getInstance().getIdentityGovernanceService();
     }
+
+    // get login status from string
+    private LoginStatus getLoginStatus(String status) {
+
+        if (LoginStatus.LOGIN_SUCCESS.getStatus().equalsIgnoreCase(status)) {
+            return LoginStatus.LOGIN_SUCCESS;
+        } else if (LoginStatus.LOGIN_FAILED.getStatus().equalsIgnoreCase(status)) {
+            return LoginStatus.LOGIN_FAILED;
+        } else {
+            return LoginStatus.PRE_LOGIN;
+        }
+    }
+
 }

@@ -16,22 +16,22 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.fraud.sift.conditional.auth.functions.internal;
+package org.wso2.carbon.identity.fraud.detection.sift.internal;
 
 import org.wso2.carbon.identity.application.authentication.framework.JsFunctionRegistry;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 
-public class SiftConditionalFunctionsDataHolder {
+public class SiftDataHolder {
 
-    private static SiftConditionalFunctionsDataHolder instance = new SiftConditionalFunctionsDataHolder();
+    private static SiftDataHolder instance = new SiftDataHolder();
     private JsFunctionRegistry jsFunctionRegistry;
     private IdentityGovernanceService identityGovernanceService;
 
-    private SiftConditionalFunctionsDataHolder() {
+    private SiftDataHolder() {
 
     }
 
-    public static SiftConditionalFunctionsDataHolder getInstance() {
+    public static SiftDataHolder getInstance() {
 
         return instance;
     }

@@ -16,10 +16,9 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.fraud.sift.conditional.auth.functions;
+package org.wso2.carbon.identity.fraud.detection.sift;
 
 import org.wso2.carbon.identity.application.common.model.Property;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.governance.IdentityMgtConstants;
 import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
@@ -35,7 +34,8 @@ import static org.wso2.carbon.identity.governance.IdentityGovernanceUtil.getProp
 public class SiftConfigConnector implements IdentityConnectorConfig {
 
     private static final String SIFT_ACCOUNT_ID = "sift.account.id";
-    private static final String SIFT_API_KEY = "__secret__.sift.api.key"; // __secret__ prefix is used to mark the property as confidential for UI rendering.
+    // __secret__ prefix is used to mark the property as confidential for UI rendering.
+    private static final String SIFT_API_KEY = "__secret__.sift.api.key";
 
     @Override
     public String getName() {

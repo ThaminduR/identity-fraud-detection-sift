@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.fraud.sift.conditional.auth.functions.internal;
+package org.wso2.carbon.identity.fraud.detection.sift.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,27 +30,27 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.authentication.framework.JsFunctionRegistry;
 import org.wso2.carbon.identity.core.util.IdentityCoreInitializedEvent;
-import org.wso2.carbon.identity.fraud.sift.conditional.auth.functions.CallSiftOnLoginFunction;
-import org.wso2.carbon.identity.fraud.sift.conditional.auth.functions.CallSiftOnLoginFunctionImpl;
-import org.wso2.carbon.identity.fraud.sift.conditional.auth.functions.SiftConfigConnector;
+import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunction;
+import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunctionImpl;
+import org.wso2.carbon.identity.fraud.detection.sift.SiftConfigConnector;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
 
 @Component(
-        name = "identity.fraud.sift.conditional.auth.functions.component",
+        name = "identity.fraud.detection.sift.component",
         immediate = true
 )
-public class SiftConditionalFunctionsServiceComponent {
+public class SiftServiceComponent {
 
     public static final String FUNC_CALL_SIFT = "getSiftRiskScoreForLogin";
-    private static final Log LOG = LogFactory.getLog(SiftConditionalFunctionsServiceComponent.class);
+    private static final Log LOG = LogFactory.getLog(SiftServiceComponent.class);
 
     @Activate
     protected void activate(ComponentContext context) {
 
         try {
-            System.out.println("Inside the SiftConditionalFunctionsServiceComponent activate method");
-            JsFunctionRegistry jsFunctionRegistry = SiftConditionalFunctionsDataHolder.getInstance()
+            System.out.println("Inside the SiftServiceComponent activate method");
+            JsFunctionRegistry jsFunctionRegistry = SiftDataHolder.getInstance()
                     .getJsFunctionRegistry();
             System.out.println("JsFunctionRegistry:obtained");
             CallSiftOnLoginFunction getSiftRiskScoreForLogin = new CallSiftOnLoginFunctionImpl();
@@ -69,7 +69,7 @@ public class SiftConditionalFunctionsServiceComponent {
     @Deactivate
     protected void deactivate(ComponentContext context) {
 
-        JsFunctionRegistry jsFunctionRegistry = SiftConditionalFunctionsDataHolder.getInstance()
+        JsFunctionRegistry jsFunctionRegistry = SiftDataHolder.getInstance()
                 .getJsFunctionRegistry();
         if (jsFunctionRegistry != null) {
             jsFunctionRegistry.deRegister(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, FUNC_CALL_SIFT);
@@ -84,12 +84,12 @@ public class SiftConditionalFunctionsServiceComponent {
     )
     public void setJsFunctionRegistry(JsFunctionRegistry jsFunctionRegistry) {
 
-        SiftConditionalFunctionsDataHolder.getInstance().setJsFunctionRegistry(jsFunctionRegistry);
+        SiftDataHolder.getInstance().setJsFunctionRegistry(jsFunctionRegistry);
     }
 
     public void unsetJsFunctionRegistry(JsFunctionRegistry jsFunctionRegistry) {
 
-        SiftConditionalFunctionsDataHolder.getInstance().setJsFunctionRegistry(null);
+        SiftDataHolder.getInstance().setJsFunctionRegistry(null);
     }
 
     @Reference(
@@ -120,11 +120,11 @@ public class SiftConditionalFunctionsServiceComponent {
             unbind = "unsetIdentityGovernanceService")
     protected void setIdentityGovernanceService(IdentityGovernanceService identityGovernanceService) {
 
-        SiftConditionalFunctionsDataHolder.getInstance().setIdentityGovernanceService(identityGovernanceService);
+        SiftDataHolder.getInstance().setIdentityGovernanceService(identityGovernanceService);
     }
 
     protected void unsetIdentityGovernanceService(IdentityGovernanceService identityGovernanceService) {
 
-        SiftConditionalFunctionsDataHolder.getInstance().setIdentityGovernanceService(null);
+        SiftDataHolder.getInstance().setIdentityGovernanceService(null);
     }
 }

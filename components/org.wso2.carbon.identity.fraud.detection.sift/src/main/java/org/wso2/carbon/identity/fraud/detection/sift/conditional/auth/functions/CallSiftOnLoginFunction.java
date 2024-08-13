@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.fraud.sift.conditional.auth.functions;
+package org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions;
 
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;

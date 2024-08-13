@@ -23,15 +23,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
-        <groupId>org.wso2.carbon.identity.fraud.sift</groupId>
-        <artifactId>identity-fraud-sift</artifactId>
+        <groupId>org.wso2.carbon.identity.fraud.detection.sift</groupId>
+        <artifactId>identity-fraud-detection-sift</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>org.wso2.carbon.identity.fraud.sift.conditional.auth.functions</artifactId>
-    <name>Identity Fraud Sift - Conditional Authentication Functions</name>
+    <artifactId>org.wso2.carbon.identity.fraud.detection.sift</artifactId>
+    <name>Identity Fraud Detection Sift</name>
     <packaging>bundle</packaging>
 
     <dependencies>
@@ -46,6 +46,10 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.governance</groupId>
             <artifactId>org.wso2.carbon.identity.governance</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.orbit.org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
         </dependency>
     </dependencies>
 
@@ -64,11 +68,11 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
                         <Private-Package>
-                            org.wso2.carbon.identity.fraud.sift.conditional.auth.functions.internal
+                            org.wso2.carbon.identity.fraud.detection.sift.internal
                         </Private-Package>
                         <Export-Package>
-                            !org.wso2.carbon.identity.fraud.sift.conditional.auth.functions.internal,
-                            org.wso2.carbon.identity.fraud.sift.conditional.auth.functions.*
+                            !org.wso2.carbon.identity.fraud.detection.sift.internal,
+                            org.wso2.carbon.identity.fraud.detection.sift.*
                         </Export-Package>
                         <Import-Package>
                             org.wso2.carbon.identity.application.authentication.framework.*; version="${carbon.identity.package.import.version.range}",
