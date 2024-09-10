@@ -18,6 +18,11 @@
 
 package org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.graalvm.polyglot.HostAccess;
 import org.json.JSONObject;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
@@ -29,6 +34,7 @@ import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.governance.bean.ConnectorConfig;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,15 +43,21 @@ import static org.wso2.carbon.identity.fraud.detection.sift.Constants.LoginStatu
 
 public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
 
+    private static final Log LOG = LogFactory.getLog(CallSiftOnLoginFunctionImpl.class);
+    private final CloseableHttpClient httpClient;
 
+    public CallSiftOnLoginFunctionImpl(CloseableHttpClient httpClient) {
+
+        this.httpClient = httpClient;
+    }
 
     @Override
     @HostAccess.Export
     public double getSiftRiskScoreForLogin(JsAuthenticationContext context, String loginStatus, List<String> parameters,
-                                           Object... paramMap)  throws FrameworkException{
+                                           Object... paramMap) throws FrameworkException {
 
         //loginStatus = login_succes, login_failed, pre_login
-        Map<String,String> props = getSiftConfigs(context.getWrapped().getTenantDomain());
+        Map<String, String> props = getSiftConfigs(context.getWrapped().getTenantDomain());
 
         // print props
         for (Map.Entry<String, String> entry : props.entrySet()) {
@@ -63,7 +75,23 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
             }
         }
 
+        // httpclient call sift api
+        HttpGet request = new HttpGet(Constants.SIFT_API_URL);
+        request.addHeader("Content-Type", "application/json");
+        LOG.info("IAM WORKING JJJ ");
 
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            // get response
+            System.out.println("Response: " + response);
+        } catch (IOException e) {
+            LOG.error("Error while executing the request: " + e);
+        }
+        // create request
+
+        // execute request
+        // get response
+        // parse response
+        // return risk score
 
         if (passedcustomparams != null) {
             System.out.println("Passed custom parameters: " + passedcustomparams);
@@ -74,12 +102,12 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
         return 0.7;
     }
 
-    private String getAccountId (String tenantDomain) throws FrameworkException {
+    private String getAccountId(String tenantDomain) throws FrameworkException {
 
         return getSiftConfigs(tenantDomain).get("sift.account.id");
     }
 
-    private String getApiKey (String tenantDomain) throws FrameworkException {
+    private String getApiKey(String tenantDomain) throws FrameworkException {
 
         return getSiftConfigs(tenantDomain).get("sift.api.key");
     }
@@ -94,17 +122,14 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
             }
             Map<String, String> siftConfigs = new HashMap<>();
             // go through the connector config and get the sift configurations
-            for (Property prop: connectorConfig.getProperties()) {
+            for (Property prop : connectorConfig.getProperties()) {
                 siftConfigs.put(prop.getName(), prop.getValue());
             }
 
-
-
             return siftConfigs;
         } catch (IdentityGovernanceException e) {
-            throw new FrameworkException("Error while retreiving sift configurations: "+ e.getMessage());
+            throw new FrameworkException("Error while retreiving sift configurations: " + e.getMessage());
         }
-
 
     }
 

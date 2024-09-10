@@ -23,6 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.wso2.carbon.identity.fraud.detection.sift.models.ConnectionConfig;
 
 import java.io.IOException;
 
@@ -32,6 +33,7 @@ public class HttpClientManager {
     private static final HttpClientManager instance = new HttpClientManager();
 
     private HttpClientManager() {
+
     }
 
     public static HttpClientManager getInstance() {
@@ -39,9 +41,9 @@ public class HttpClientManager {
         return instance;
     }
 
-    public CloseableHttpClient getHttpClient() {
+    public CloseableHttpClient getHttpClient(ConnectionConfig connectionConfig) {
 
-        return HttpClientBuilder.create().build();
+        return HttpClientBuilder.create().setDefaultRequestConfig(getRequestConfig(connectionConfig)).build();
     }
 
     public void closeHttpClient(CloseableHttpClient httpClient) {
@@ -53,15 +55,14 @@ public class HttpClientManager {
         }
     }
 
-//    private RequestConfig getRequestConfig() {
-//
-//        RequestConfig config = RequestConfig.custom()
-//                .setConnectTimeout(ConfigProvider.getInstance().getConnectionTimeout())
-//                .setConnectionRequestTimeout(ConfigProvider.getInstance().getConnectionRequestTimeout())
-//                .setSocketTimeout(ConfigProvider.getInstance().getReadTimeout())
-//                .setRedirectsEnabled(false)
-//                .setRelativeRedirectsAllowed(false)
-//                .build();
-//    }
+    private RequestConfig getRequestConfig(ConnectionConfig connectionConfig) {
 
+        return RequestConfig.custom()
+                .setConnectTimeout(connectionConfig.getConnectionTimeout())
+                .setConnectionRequestTimeout(connectionConfig.getConnectionRequestTimeout())
+                .setSocketTimeout(connectionConfig.getReadTimeout())
+                .setRedirectsEnabled(false)
+                .setRelativeRedirectsAllowed(false)
+                .build();
+    }
 }

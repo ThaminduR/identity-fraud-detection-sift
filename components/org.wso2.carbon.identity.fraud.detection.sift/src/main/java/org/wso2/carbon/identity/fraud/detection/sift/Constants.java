@@ -23,6 +23,34 @@ public class Constants {
     private Constants() {
     }
 
+    public static final String SIFT_API_URL = "https://encu6fvnqmd05.x.pipedream.net/";
+
+    // Connector configs.
+    public static final String SIFT_ACCOUNT_ID_PROP = "sift.account.id";
+    public static final String SIFT_ACCOUNT_ID_PROP_NAME = "Account ID";
+    public static final String SIFT_ACCOUNT_ID_PROP_DESC =  "Account id of the Sift account.";
+    // __secret__ prefix is used to mark the property as confidential for UI rendering.
+    public static final String SIFT_API_KEY_PROP = "__secret__.sift.api.key";
+    public static final String SIFT_API_KEY_PROP_NAME = "API Key";
+    public static final String SIFT_API_KEY_PROP_DESC = "API key of the Sift account.";
+    public static final String CONNECTOR_NAME = "sift-configuration";
+    public static final String CONNECTOR_FRIENDLY_NAME = "Sift Configuration";
+    public static final String CONNECTOR_CATEGORY = "Other Settings";
+    public static final String CONNECTOR_SUB_CATEGORY = "DEFAULT";
+    public static final int CONNECTOR_ORDER = 0;
+
+    // HTTP Client configs.
+    // Timeouts in milliseconds.
+    public static final int CONNECTION_TIMEOUT = 5000;
+    public static final int CONNECTION_REQUEST_TIMEOUT = 5000;
+    public static final int READ_TIMEOUT = 5000;
+
+    // Identity configs.
+    public static final String CONNECTION_TIMEOUT_CONFIG = "Sift.HTTPClient.ConnectionTimeout";
+    public static final String CONNECTION_REQUEST_TIMEOUT_CONFIG = "Sift.HTTPClient.ConnectionRequestTimeout";
+    public static final String READ_TIMEOUT_CONFIG = "Sift.HTTPClient.ReadTimeout";
+
+
     public enum LoginStatus {
 
         LOGIN_SUCCESS("LOGIN_SUCCESS", "$success"),
