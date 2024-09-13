@@ -25,6 +25,7 @@
             <class name="org.wso2.carbon.identity.fraud.detection.ConnectionConfigTest"/>
             <class name="org.wso2.carbon.identity.fraud.detection.HttpClientManagerTest"/>
             <class name="org.wso2.carbon.identity.fraud.detection.SiftConfigConnectorTest"/>
+            <class name="org.wso2.carbon.identity.fraud.detection.LoginEventPayloadTest"/>
         </classes>
     </test>
 </suite>

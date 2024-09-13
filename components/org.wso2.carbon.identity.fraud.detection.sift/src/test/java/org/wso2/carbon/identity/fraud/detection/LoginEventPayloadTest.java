@@ -90,6 +90,7 @@ public class LoginEventPayloadTest {
         String jsonOutput = payload.toJson();
 
         validateJson(jsonOutput);
+        System.out.println(jsonOutput);
         Assert.assertFalse(jsonOutput.contains("$user_id"), "$user_id should not be present.");
         Assert.assertTrue(jsonOutput.contains("\"$social_sign_on\":\"$linkedin\""));
     }

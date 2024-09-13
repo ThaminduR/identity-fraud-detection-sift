@@ -34,46 +34,55 @@ public class ConnectionConfigTest {
     @Test
     public void testBuilderWithPassedValues() {
 
+        int connectionTimeout = 5000;
+        int readTimeout = 6000;
+        int connectionRequestTimeout = 7000;
+
         ConnectionConfig config = new ConnectionConfig.Builder()
-                .setConnectionTimeout(5000)
-                .setReadTimeout(6000)
-                .setConnectionRequestTimeout(7000)
+                .setConnectionTimeout(connectionTimeout)
+                .setReadTimeout(readTimeout)
+                .setConnectionRequestTimeout(connectionRequestTimeout)
                 .build();
 
-        Assert.assertEquals(config.getConnectionTimeout(), 5000);
-        Assert.assertEquals(config.getReadTimeout(), 6000);
-        Assert.assertEquals(config.getConnectionRequestTimeout(), 7000);
+        Assert.assertEquals(config.getConnectionTimeout(), connectionTimeout);
+        Assert.assertEquals(config.getReadTimeout(), readTimeout);
+        Assert.assertEquals(config.getConnectionRequestTimeout(), connectionRequestTimeout);
     }
 
     @Test
     public void testBuilderWithIdentityUtilValues() {
 
+        int connectionTimeout = 8000;
+        int readTimeout = 9000;
+        int connectionRequestTimeout = 10000;
+
         try (MockedStatic<IdentityUtil> mockedIdentityUtil = Mockito.mockStatic(IdentityUtil.class)) {
             mockedIdentityUtil.when(() -> IdentityUtil.getProperty(Constants.CONNECTION_TIMEOUT_CONFIG))
-                    .thenReturn("8000");
+                    .thenReturn(String.valueOf(connectionTimeout));
             mockedIdentityUtil.when(() -> IdentityUtil.getProperty(Constants.READ_TIMEOUT_CONFIG))
-                    .thenReturn("9000");
+                    .thenReturn(String.valueOf(readTimeout));
             mockedIdentityUtil.when(() -> IdentityUtil.getProperty(Constants.CONNECTION_REQUEST_TIMEOUT_CONFIG))
-                    .thenReturn("10000");
+                    .thenReturn(String.valueOf(connectionRequestTimeout));
 
             ConnectionConfig config = new ConnectionConfig.Builder().build();
 
-            Assert.assertEquals(config.getConnectionTimeout(), 8000);
-            Assert.assertEquals(config.getReadTimeout(), 9000);
-            Assert.assertEquals(config.getConnectionRequestTimeout(), 10000);
+            Assert.assertEquals(config.getConnectionTimeout(), connectionTimeout);
+            Assert.assertEquals(config.getReadTimeout(), readTimeout);
+            Assert.assertEquals(config.getConnectionRequestTimeout(), connectionRequestTimeout);
         }
     }
 
     @Test
     public void testBuilderWithInvalidIdentityUtilValues() {
 
+        String invalidValue = "invalid";
         try (MockedStatic<IdentityUtil> mockedIdentityUtil = Mockito.mockStatic(IdentityUtil.class)) {
             mockedIdentityUtil.when(() -> IdentityUtil.getProperty(Constants.CONNECTION_TIMEOUT_CONFIG))
-                    .thenReturn("invalid");
+                    .thenReturn(invalidValue);
             mockedIdentityUtil.when(() -> IdentityUtil.getProperty(Constants.READ_TIMEOUT_CONFIG))
-                    .thenReturn("invalid");
+                    .thenReturn(invalidValue);
             mockedIdentityUtil.when(() -> IdentityUtil.getProperty(Constants.CONNECTION_REQUEST_TIMEOUT_CONFIG))
-                    .thenReturn("invalid");
+                    .thenReturn(invalidValue);
 
             ConnectionConfig config = new ConnectionConfig.Builder().build();
 

@@ -27,6 +27,7 @@ import org.graalvm.polyglot.HostAccess;
 import org.json.JSONObject;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
+import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.fraud.detection.sift.Constants;
 import org.wso2.carbon.identity.fraud.detection.sift.internal.SiftDataHolder;
@@ -41,6 +42,9 @@ import java.util.Map;
 
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.LoginStatus;
 
+/**
+ * Function to call Sift on login.
+ */
 public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
 
     private static final Log LOG = LogFactory.getLog(CallSiftOnLoginFunctionImpl.class);
@@ -53,9 +57,25 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
 
     @Override
     @HostAccess.Export
-    public double getSiftRiskScoreForLogin(JsAuthenticationContext context, String loginStatus, List<String> parameters,
+    public double getSiftRiskScoreForLogin(JsAuthenticationContext context, String loginStatus, List<String> paramKeys,
                                            Object... paramMap) throws FrameworkException {
 
+        // Get the login data
+        // Resolve the login status
+        // Resolve the paramKeys
+        // Get the api key
+        // Build the payload
+        // Call the Sift API
+
+        String loginSts = getLoginStatus(loginStatus).getSiftValue();
+
+
+
+
+
+
+
+        //////////////
         //loginStatus = login_succes, login_failed, pre_login
         Map<String, String> props = getSiftConfigs(context.getWrapped().getTenantDomain());
 
@@ -94,7 +114,7 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
         // return risk score
 
         if (passedcustomparams != null) {
-            System.out.println("Passed custom parameters: " + passedcustomparams);
+            System.out.println("Passed custom paramKeys: " + passedcustomparams);
             pmap = new JSONObject(passedcustomparams);
         }
 
@@ -107,7 +127,7 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
         return getSiftConfigs(tenantDomain).get("sift.account.id");
     }
 
-    private String getApiKey(String tenantDomain) throws FrameworkException {
+    private String getSiftApiKey(String tenantDomain) throws FrameworkException {
 
         return getSiftConfigs(tenantDomain).get("sift.api.key");
     }
@@ -138,6 +158,8 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
         return SiftDataHolder.getInstance().getIdentityGovernanceService();
     }
 
+
+
     // get login status from string
     private LoginStatus getLoginStatus(String status) {
 
@@ -149,5 +171,31 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
             return LoginStatus.PRE_LOGIN;
         }
     }
+
+//    private String resolvePayloadData(String key, JsAuthenticationContext context) {
+//
+//        switch (key) {
+//            case Constants.USER_ID_KEY:
+//                try {
+//                    return context.getWrapped().getLastAuthenticatedUser().getUserId();
+//                } catch (UserIdNotFoundException e) {
+//                    LOG.debug("Unable to resolve the user id.", e);
+//                    return null;
+//                }
+//            case Constants.USER_AGENT_KEY:
+//                return context.getWrapped().getReq
+//            case Constants.IP_KEY:
+//                return context.getWrapped().getRequest().getRemoteAddr();
+//            case Constants.SESSION_ID_KEY:
+//                // hash the value of the getContextIdentifier
+//                return context.getWrapped().getSessionIdentifier(); // DigestUtils.sha256Hex(cookie.getValue());
+//
+//
+//            default:
+//                return null;
+//        }
+//
+//        return context.getParameter(paramKey);
+//    }
 
 }

@@ -63,9 +63,6 @@ public class LoginEventPayload {
      Mark arbitraryData without @Expose to prevent its serialization.*/
     private Map<String, Object> arbitraryData;
 
-    /**
-     * Represents the browser details.
-     */
     public static class Browser {
 
         @SerializedName("$user_agent")

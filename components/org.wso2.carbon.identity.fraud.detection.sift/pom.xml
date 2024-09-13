@@ -52,6 +52,10 @@
             <artifactId>httpclient</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
         </dependency>
@@ -92,7 +96,8 @@
                             org.json.*,
                             org.apache.http.*,
                             org.apache.commons.logging; version="${import.package.version.commons.logging}",
-                            org.wso2.carbon.identity.governance.*; version="${identity.governance.import.version.range}"
+                            org.wso2.carbon.identity.governance.*; version="${identity.governance.import.version.range}",
+                            com.google.gson;version="${com.google.code.gson.osgi.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>
@@ -175,10 +180,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>9</source>
-                    <target>9</target>
-                </configuration>
             </plugin>
         </plugins>
     </build>

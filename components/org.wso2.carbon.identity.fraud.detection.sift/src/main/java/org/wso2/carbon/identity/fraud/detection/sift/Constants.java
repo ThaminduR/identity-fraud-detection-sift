@@ -50,6 +50,13 @@ public class Constants {
     public static final String CONNECTION_REQUEST_TIMEOUT_CONFIG = "Sift.HTTPClient.ConnectionRequestTimeout";
     public static final String READ_TIMEOUT_CONFIG = "Sift.HTTPClient.ReadTimeout";
 
+    // Supported param keys.
+    public static final String USER_ID_KEY = "$user_id";
+    public static final String SESSION_ID_KEY = "$session_id";
+    public static final String IP_KEY = "$ip";
+    public static final String USER_AGENT_KEY = "$user_agent";
+
+
 
     public enum LoginStatus {
 
