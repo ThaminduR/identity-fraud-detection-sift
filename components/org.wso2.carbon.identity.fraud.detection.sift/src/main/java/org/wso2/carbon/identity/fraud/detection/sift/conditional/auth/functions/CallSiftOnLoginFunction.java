@@ -22,12 +22,24 @@ import org.wso2.carbon.identity.application.authentication.framework.config.mode
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 
 import java.util.List;
-import java.util.Map;
 
+/**
+ * Functional interface to call Sift on login.
+ */
 @FunctionalInterface
 public interface CallSiftOnLoginFunction {
 
-//    double getSiftRiskScoreForLogin(JsAuthenticationContext context);
+    /**
+     * Get Sift risk score for login.
+     *
+     * @param context     Authentication context.
+     * @param loginStatus Login status. Expected values are "LOGIN_SUCCESS", "LOGIN_FAILED" and "PRE_LOGIN".
+     * @param paramKeys   Parameter keys which is used to get the data to be sent to Sift.
+     * @param paramMap    [Optional] An arbitrary data map to be sent to Sift. A json object can be passed to the
+     *                    function which will be included as it is in the payload to Sift.
+     * @return Sift risk score.
+     * @throws FrameworkException FrameworkException.
+     */
     double getSiftRiskScoreForLogin(JsAuthenticationContext context, String loginStatus,
-                                    List<String> parameters, Object... paramMap) throws FrameworkException;
+                                    List<String> paramKeys, Object... paramMap) throws FrameworkException;
 }
