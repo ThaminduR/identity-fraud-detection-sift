@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.fraud.detection.sift.models;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -68,7 +69,8 @@ public class ConnectionConfig {
 
             String connectionTimeoutConfig = IdentityUtil.getProperty(Constants.CONNECTION_TIMEOUT_CONFIG);
             try {
-                this.connectionTimeout = Integer.parseInt(connectionTimeoutConfig);
+                this.connectionTimeout = StringUtils.isNotBlank(connectionTimeoutConfig) ?
+                        Integer.parseInt(connectionTimeoutConfig) : Constants.CONNECTION_TIMEOUT;
             } catch (NumberFormatException e) {
                 LOG.error("Error while parsing connection timeout : " + connectionTimeoutConfig +
                         " defaulting to system default : " + Constants.CONNECTION_TIMEOUT, e);
@@ -77,7 +79,8 @@ public class ConnectionConfig {
 
             String readTimeoutConfig = IdentityUtil.getProperty(Constants.READ_TIMEOUT_CONFIG);
             try {
-                this.readTimeout = Integer.parseInt(readTimeoutConfig);
+                this.readTimeout = StringUtils.isNotBlank(readTimeoutConfig) ?
+                        Integer.parseInt(readTimeoutConfig) : Constants.READ_TIMEOUT;
             } catch (NumberFormatException e) {
                 LOG.error("Error while parsing read timeout : " + readTimeoutConfig +
                         " defaulting to system default : " + Constants.READ_TIMEOUT, e);
@@ -87,7 +90,8 @@ public class ConnectionConfig {
             String connectionRequestTimeoutConfig =
                     IdentityUtil.getProperty(Constants.CONNECTION_REQUEST_TIMEOUT_CONFIG);
             try {
-                this.connectionRequestTimeout = Integer.parseInt(connectionRequestTimeoutConfig);
+                this.connectionRequestTimeout = StringUtils.isNotBlank(connectionRequestTimeoutConfig) ?
+                        Integer.parseInt(connectionRequestTimeoutConfig) : Constants.CONNECTION_REQUEST_TIMEOUT;
             } catch (NumberFormatException e) {
                 LOG.error("Error while parsing connection request timeout : " + connectionRequestTimeoutConfig +
                         " defaulting to system default : " + Constants.CONNECTION_REQUEST_TIMEOUT, e);

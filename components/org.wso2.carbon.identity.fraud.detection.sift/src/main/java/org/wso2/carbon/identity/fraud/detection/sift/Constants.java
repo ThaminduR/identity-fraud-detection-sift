@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.fraud.detection.sift;
 
+/**
+ * Constants class to hold the constants used in the Sift connector.
+ */
 public class Constants {
 
     private Constants() {
@@ -56,8 +59,9 @@ public class Constants {
     public static final String IP_KEY = "$ip";
     public static final String USER_AGENT_KEY = "$user_agent";
 
-
-
+    /**
+     * Enum to hold the login status.
+     */
     public enum LoginStatus {
 
         LOGIN_SUCCESS("LOGIN_SUCCESS", "$success"),

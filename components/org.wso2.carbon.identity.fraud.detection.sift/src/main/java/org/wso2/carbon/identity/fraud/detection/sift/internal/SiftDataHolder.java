@@ -21,6 +21,9 @@ package org.wso2.carbon.identity.fraud.detection.sift.internal;
 import org.wso2.carbon.identity.application.authentication.framework.JsFunctionRegistry;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 
+/**
+ * Sift Data Holder class to hold the required services.
+ */
 public class SiftDataHolder {
 
     private static SiftDataHolder instance = new SiftDataHolder();

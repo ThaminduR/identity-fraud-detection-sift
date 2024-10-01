@@ -33,12 +33,12 @@ import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_NAME;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_ORDER;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_SUB_CATEGORY;
+import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_ACCOUNT_ID_PROP;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_ACCOUNT_ID_PROP_DESC;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_ACCOUNT_ID_PROP_NAME;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_ACCOUNT_ID_PROP;
+import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_KEY_PROP;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_KEY_PROP_DESC;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_KEY_PROP_NAME;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_KEY_PROP;
 import static org.wso2.carbon.identity.governance.IdentityGovernanceUtil.getPropertyObject;
 
 /**
@@ -80,6 +80,7 @@ public class SiftConfigConnector implements IdentityConnectorConfig {
     public Map<String, String> getPropertyNameMapping() {
 
         Map<String, String> mapping = new HashMap<>();
+        // TODO: Check and remove the account id property if not needed.
         mapping.put(SIFT_ACCOUNT_ID_PROP, SIFT_ACCOUNT_ID_PROP_NAME);
         mapping.put(SIFT_API_KEY_PROP, SIFT_API_KEY_PROP_NAME);
         return mapping;

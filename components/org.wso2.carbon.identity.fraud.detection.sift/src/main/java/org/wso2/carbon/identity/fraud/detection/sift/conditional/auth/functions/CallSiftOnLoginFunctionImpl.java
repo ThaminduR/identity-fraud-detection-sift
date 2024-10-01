@@ -27,7 +27,6 @@ import org.graalvm.polyglot.HostAccess;
 import org.json.JSONObject;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
-import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.fraud.detection.sift.Constants;
 import org.wso2.carbon.identity.fraud.detection.sift.internal.SiftDataHolder;
@@ -69,23 +68,15 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
 
         String loginSts = getLoginStatus(loginStatus).getSiftValue();
 
-
-
-
-
-
-
-        //////////////
         //loginStatus = login_succes, login_failed, pre_login
         Map<String, String> props = getSiftConfigs(context.getWrapped().getTenantDomain());
 
         // print props
         for (Map.Entry<String, String> entry : props.entrySet()) {
-            System.out.println(entry.getKey() + ":" + entry.getValue());
+            LOG.info(entry.getKey() + ":" + entry.getValue());
         }
 
         Map<String, Object> passedcustomparams = null;
-        JSONObject pmap = new JSONObject();
         if (paramMap.length == 1) {
             if (paramMap[0] instanceof Map) {
                 passedcustomparams = (Map<String, Object>) paramMap[0];
@@ -102,7 +93,7 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
 
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             // get response
-            System.out.println("Response: " + response);
+            LOG.info("Response: " + response);
         } catch (IOException e) {
             LOG.error("Error while executing the request: " + e);
         }
@@ -113,12 +104,14 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
         // parse response
         // return risk score
 
+        JSONObject pmap;
         if (passedcustomparams != null) {
-            System.out.println("Passed custom paramKeys: " + passedcustomparams);
+            LOG.info("Passed custom paramKeys: " + passedcustomparams);
             pmap = new JSONObject(passedcustomparams);
+            LOG.info("Passed custom paramKeys: " + pmap);
         }
 
-        System.out.println("Inside the CallSiftOnLoginFunctionImpl");
+        LOG.info("Inside the CallSiftOnLoginFunctionImpl");
         return 0.7;
     }
 
@@ -141,14 +134,14 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
                 throw new FrameworkException("Sift configurations not found for tenant: " + tenantDomain);
             }
             Map<String, String> siftConfigs = new HashMap<>();
-            // go through the connector config and get the sift configurations
+            // Go through the connector config and get the sift configurations.
             for (Property prop : connectorConfig.getProperties()) {
                 siftConfigs.put(prop.getName(), prop.getValue());
             }
 
             return siftConfigs;
         } catch (IdentityGovernanceException e) {
-            throw new FrameworkException("Error while retreiving sift configurations: " + e.getMessage());
+            throw new FrameworkException("Error while retrieving sift configurations: " + e.getMessage());
         }
 
     }
@@ -168,6 +161,7 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
         } else if (LoginStatus.LOGIN_FAILED.getStatus().equalsIgnoreCase(status)) {
             return LoginStatus.LOGIN_FAILED;
         } else {
+            // TODO: remove pre-login status as this is not supported by sift.
             return LoginStatus.PRE_LOGIN;
         }
     }
