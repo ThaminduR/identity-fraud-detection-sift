@@ -27,6 +27,9 @@ import org.wso2.carbon.identity.fraud.detection.sift.models.ConnectionConfig;
 
 import java.io.IOException;
 
+/**
+ * HttpClientManager class to manage HttpClient instances.
+ */
 public class HttpClientManager {
 
     private static final Log LOG = LogFactory.getLog(HttpClientManager.class);

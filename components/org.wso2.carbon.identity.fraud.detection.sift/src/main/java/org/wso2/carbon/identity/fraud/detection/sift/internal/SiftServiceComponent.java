@@ -32,13 +32,16 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.authentication.framework.JsFunctionRegistry;
 import org.wso2.carbon.identity.core.util.IdentityCoreInitializedEvent;
 import org.wso2.carbon.identity.fraud.detection.sift.HttpClientManager;
+import org.wso2.carbon.identity.fraud.detection.sift.SiftConfigConnector;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunction;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunctionImpl;
-import org.wso2.carbon.identity.fraud.detection.sift.SiftConfigConnector;
 import org.wso2.carbon.identity.fraud.detection.sift.models.ConnectionConfig;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
 
+/**
+ * Service component for Sift.
+ */
 @Component(
         name = "identity.fraud.detection.sift.component",
         immediate = true
