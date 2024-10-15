@@ -1,4 +1,4 @@
-package org.wso2.carbon.identity.fraud.detection.util;
+package org.wso2.carbon.identity.fraud.detection.sift.util;
 
 import org.json.JSONObject;
 import org.mockito.Mock;
@@ -15,7 +15,6 @@ import org.wso2.carbon.identity.application.authentication.framework.model.Authe
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.fraud.detection.sift.Constants;
 import org.wso2.carbon.identity.fraud.detection.sift.internal.SiftDataHolder;
-import org.wso2.carbon.identity.fraud.detection.sift.util.Util;
 import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.governance.bean.ConnectorConfig;
