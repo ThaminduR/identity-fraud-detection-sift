@@ -16,14 +16,13 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.fraud.detection;
+package org.wso2.carbon.identity.fraud.detection.sift;
 
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.fraud.detection.sift.Constants;
 import org.wso2.carbon.identity.fraud.detection.sift.models.ConnectionConfig;
 
 /**

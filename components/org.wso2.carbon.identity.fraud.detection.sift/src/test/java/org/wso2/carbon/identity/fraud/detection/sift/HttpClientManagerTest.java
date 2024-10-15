@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.fraud.detection;
+package org.wso2.carbon.identity.fraud.detection.sift;
 
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -25,7 +25,6 @@ import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.wso2.carbon.identity.fraud.detection.sift.HttpClientManager;
 import org.wso2.carbon.identity.fraud.detection.sift.models.ConnectionConfig;
 
 import java.io.IOException;

@@ -18,8 +18,6 @@
 
 package org.wso2.carbon.identity.fraud.detection.sift;
 
-import org.wso2.carbon.identity.application.common.model.Property;
-import org.wso2.carbon.identity.governance.IdentityMgtConstants;
 import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
 
 import java.util.ArrayList;
@@ -33,13 +31,9 @@ import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_NAME;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_ORDER;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_SUB_CATEGORY;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_ACCOUNT_ID_PROP;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_ACCOUNT_ID_PROP_DESC;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_ACCOUNT_ID_PROP_NAME;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_KEY_PROP;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_KEY_PROP_DESC;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_KEY_PROP_NAME;
-import static org.wso2.carbon.identity.governance.IdentityGovernanceUtil.getPropertyObject;
 
 /**
  * Sift Config Connector containing the configurations required for integrating with Sift.
@@ -80,8 +74,6 @@ public class SiftConfigConnector implements IdentityConnectorConfig {
     public Map<String, String> getPropertyNameMapping() {
 
         Map<String, String> mapping = new HashMap<>();
-        // TODO: Check and remove the account id property if not needed.
-        mapping.put(SIFT_ACCOUNT_ID_PROP, SIFT_ACCOUNT_ID_PROP_NAME);
         mapping.put(SIFT_API_KEY_PROP, SIFT_API_KEY_PROP_NAME);
         return mapping;
     }
@@ -90,7 +82,6 @@ public class SiftConfigConnector implements IdentityConnectorConfig {
     public Map<String, String> getPropertyDescriptionMapping() {
 
         Map<String, String> mapping = new HashMap<>();
-        mapping.put(SIFT_ACCOUNT_ID_PROP, SIFT_ACCOUNT_ID_PROP_DESC);
         mapping.put(SIFT_API_KEY_PROP, SIFT_API_KEY_PROP_DESC);
         return mapping;
     }
@@ -99,7 +90,6 @@ public class SiftConfigConnector implements IdentityConnectorConfig {
     public String[] getPropertyNames() {
 
         List<String> properties = new ArrayList<>();
-        properties.add(SIFT_ACCOUNT_ID_PROP);
         properties.add(SIFT_API_KEY_PROP);
         return properties.toArray(new String[0]);
     }
@@ -109,7 +99,6 @@ public class SiftConfigConnector implements IdentityConnectorConfig {
 
         Map<String, String> defaultProperties = new HashMap<>();
 
-        defaultProperties.put(SIFT_ACCOUNT_ID_PROP, "");
         defaultProperties.put(SIFT_API_KEY_PROP, "");
         Properties properties = new Properties();
         properties.putAll(defaultProperties);
@@ -128,13 +117,5 @@ public class SiftConfigConnector implements IdentityConnectorConfig {
         List<String> properties = new ArrayList<>();
         properties.add(SIFT_API_KEY_PROP);
         return properties;
-    }
-
-    @Override
-    public Map<String, Property> getMetaData() {
-
-        Map<String, Property> meta = new HashMap<>();
-        meta.put(SIFT_ACCOUNT_ID_PROP, getPropertyObject(IdentityMgtConstants.DataTypes.STRING.getValue()));
-        return meta;
     }
 }

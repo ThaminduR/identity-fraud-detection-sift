@@ -22,10 +22,12 @@
     <test name="IdentityFraudDetectionSiftTests" preserve-order="true" parallel="false">
         <!--<parameter name="log-level" value="debug"/>-->
         <classes>
-            <class name="org.wso2.carbon.identity.fraud.detection.ConnectionConfigTest"/>
-            <class name="org.wso2.carbon.identity.fraud.detection.HttpClientManagerTest"/>
-            <class name="org.wso2.carbon.identity.fraud.detection.SiftConfigConnectorTest"/>
-            <class name="org.wso2.carbon.identity.fraud.detection.LoginEventPayloadTest"/>
+            <class name="org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunctionImplTest"/>
+            <class name="org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.PublishLoginToSiftFunctionImplTest"/>
+            <class name="org.wso2.carbon.identity.fraud.detection.sift.util.UtilTest"/>
+            <class name="org.wso2.carbon.identity.fraud.detection.sift.ConnectionConfigTest"/>
+            <class name="org.wso2.carbon.identity.fraud.detection.sift.HttpClientManagerTest"/>
+            <class name="org.wso2.carbon.identity.fraud.detection.sift.SiftConfigConnectorTest"/>
         </classes>
     </test>
 </suite>

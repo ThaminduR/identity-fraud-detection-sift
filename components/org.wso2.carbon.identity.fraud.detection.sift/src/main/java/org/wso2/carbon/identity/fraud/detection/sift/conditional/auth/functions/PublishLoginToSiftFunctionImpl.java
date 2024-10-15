@@ -20,7 +20,6 @@ package org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -45,24 +44,24 @@ import java.util.Map;
 import static org.wso2.carbon.identity.fraud.detection.sift.util.Util.getMaskedSiftPayload;
 
 /**
- * Function to call Sift on login.
+ * Function to publish login event to Sift.
  */
-public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
+public class PublishLoginToSiftFunctionImpl implements PublishLoginToSiftFunction {
 
-    private static final Log LOG = LogFactory.getLog(CallSiftOnLoginFunctionImpl.class);
+    private static final Log LOG = LogFactory.getLog(PublishLoginToSiftFunctionImpl.class);
     private final CloseableHttpClient httpClient;
 
-    public CallSiftOnLoginFunctionImpl(CloseableHttpClient httpClient) {
+    public PublishLoginToSiftFunctionImpl(CloseableHttpClient httpClient) {
 
         this.httpClient = httpClient;
     }
 
     @Override
     @HostAccess.Export
-    public double getSiftRiskScoreForLogin(JsAuthenticationContext context, String loginStatus, List<String> paramKeys,
-                                           Object... paramMap) throws FrameworkException {
+    public void publishLoginEventToSift(JsAuthenticationContext context, String loginStatus, List<String> paramKeys,
+                                        Object... paramMap) throws FrameworkException {
 
-        HttpPost request = new HttpPost(Constants.SIFT_API_URL + Constants.RETURN_SCORE_PARAM);
+        HttpPost request = new HttpPost(Constants.SIFT_API_URL);
         request.addHeader(Constants.CONTENT_TYPE_HEADER, FrameworkConstants.ContentTypes.TYPE_APPLICATION_JSON);
 
         Map<String, Object> passedCustomParams = Util.getPassedCustomParams(paramMap);
@@ -72,49 +71,33 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
         JSONObject payload = Util.buildPayload(context, loginStatus, paramKeys, passedCustomParams);
 
         if (isLoggingEnabled) {
-            LOG.info("Payload sent to Sift for risk score evaluation: " + getMaskedSiftPayload(payload));
+            LOG.info("Payload sent to Sift for login event publishing: " + getMaskedSiftPayload(payload));
         }
 
         StringEntity entity = new StringEntity(payload.toString(), ContentType.APPLICATION_JSON);
         request.setEntity(entity);
 
         try (CloseableHttpResponse response = httpClient.execute(request)) {
-
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                LOG.error("Error occurred while getting the risk score from Sift. HTTP Status code: " +
+                LOG.error("Error occurred while publishing login event information to Sift. HTTP Status code: " +
                         response.getStatusLine().getStatusCode());
-                return Constants.DEFAULT_ERROR_VALUE;
-            }
-
-            HttpEntity responseEntity = response.getEntity();
-            if (responseEntity == null) {
-                LOG.error("Error occurred while getting the risk score from Sift. Response is null.");
-                return Constants.DEFAULT_ERROR_VALUE;
+                return;
             }
 
             JSONObject jsonResponse = new JSONObject(new JSONTokener(new InputStreamReader(
                     response.getEntity().getContent(), StandardCharsets.UTF_8)));
             if (jsonResponse.has(Constants.SIFT_STATUS) &&
-                    jsonResponse.getInt(Constants.SIFT_STATUS) != Constants.SIFT_STATUS_OK) {
-                LOG.error("Error occurred from Sift while getting the risk score. Received Sift status: " +
-                        jsonResponse.getInt(Constants.SIFT_STATUS));
-                return Constants.DEFAULT_ERROR_VALUE;
-            }
-
-            JSONObject scoreResponse = jsonResponse.optJSONObject(Constants.SIFT_SCORE_RESPONSE);
-            JSONObject scores = scoreResponse != null ? scoreResponse.optJSONObject(Constants.SIFT_SCORES) : null;
-            JSONObject accountTakeover = scores != null ? scores.optJSONObject(Constants.SIFT_ACCOUNT_TAKEOVER) : null;
-
-            if (accountTakeover != null && accountTakeover.has(Constants.SIFT_SCORE)) {
-                double riskScore = accountTakeover.getDouble(Constants.SIFT_SCORE);
+                    jsonResponse.getInt(Constants.SIFT_STATUS) == Constants.SIFT_STATUS_OK) {
                 if (isLoggingEnabled) {
-                    LOG.info("Sift risk score: " + riskScore);
+                    LOG.info("Successfully published login event information to Sift.");
                 }
-                return riskScore;
+            } else {
+                LOG.error("Error occurred from Sift while publishing login event information. " +
+                        "Received Sift status: " + jsonResponse.getInt(Constants.SIFT_STATUS));
             }
+
         } catch (IOException e) {
-            throw new FrameworkException("Error while executing the request: " + e);
+            throw new FrameworkException("Error occurred while publishing login event information to Sift.", e);
         }
-        return Constants.DEFAULT_ERROR_VALUE;
     }
 }
