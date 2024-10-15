@@ -20,26 +20,26 @@ package org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.graalvm.polyglot.HostAccess;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
-import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.fraud.detection.sift.Constants;
-import org.wso2.carbon.identity.fraud.detection.sift.internal.SiftDataHolder;
-import org.wso2.carbon.identity.governance.IdentityGovernanceException;
-import org.wso2.carbon.identity.governance.IdentityGovernanceService;
-import org.wso2.carbon.identity.governance.bean.ConnectorConfig;
+import org.wso2.carbon.identity.fraud.detection.sift.util.Util;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.LoginStatus;
 
 /**
  * Function to call Sift on login.
@@ -59,137 +59,54 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
     public double getSiftRiskScoreForLogin(JsAuthenticationContext context, String loginStatus, List<String> paramKeys,
                                            Object... paramMap) throws FrameworkException {
 
-        // Get the login data
-        // Resolve the login status
-        // Resolve the paramKeys
-        // Get the api key
-        // Build the payload
-        // Call the Sift API
-
-        String loginSts = getLoginStatus(loginStatus).getSiftValue();
-
-        //loginStatus = login_succes, login_failed, pre_login
-        Map<String, String> props = getSiftConfigs(context.getWrapped().getTenantDomain());
-
-        // print props
-        for (Map.Entry<String, String> entry : props.entrySet()) {
-            LOG.info(entry.getKey() + ":" + entry.getValue());
-        }
-
-        Map<String, Object> passedcustomparams = null;
-        if (paramMap.length == 1) {
-            if (paramMap[0] instanceof Map) {
-                passedcustomparams = (Map<String, Object>) paramMap[0];
-            } else {
-                throw new IllegalArgumentException("Invalid argument type. Expected paramMap " +
-                        "(Map<String, Object>).");
-            }
-        }
-
-        // httpclient call sift api
-        HttpGet request = new HttpGet(Constants.SIFT_API_URL);
+        HttpPost request = new HttpPost(Constants.SIFT_API_URL + Constants.RETURN_SCORE_PARAM);
         request.addHeader("Content-Type", "application/json");
-        LOG.info("IAM WORKING JJJ ");
+
+        Map<String, Object> passedCustomParams = Util.getPassedCustomParams(paramMap);
+
+        boolean isLoggingEnabled = Util.isLoggingEnabled(passedCustomParams);
+
+        JSONObject payload = Util.buildPayload(context, loginStatus, paramKeys, passedCustomParams);
+
+        if (isLoggingEnabled) {
+            LOG.info("Payload sent to Sift for risk score evaluation: " + payload);
+        }
+
+        StringEntity entity = new StringEntity(payload.toString(), ContentType.APPLICATION_JSON);
+        request.setEntity(entity);
 
         try (CloseableHttpResponse response = httpClient.execute(request)) {
-            // get response
-            LOG.info("Response: " + response);
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                HttpEntity responseEntity = response.getEntity();
+                if (responseEntity != null) {
+                    JSONObject jsonResponse = new JSONObject(new JSONTokener(new InputStreamReader(
+                            response.getEntity().getContent(), StandardCharsets.UTF_8)));
+                    if (jsonResponse.has(Constants.SIFT_STATUS) &&
+                            jsonResponse.getInt(Constants.SIFT_STATUS) == Constants.SIFT_STATUS_OK) {
+                        JSONObject scoreResponse = jsonResponse.optJSONObject(Constants.SIFT_SCORE_RESPONSE);
+                        if (scoreResponse != null) {
+                            JSONObject scores = scoreResponse.optJSONObject(Constants.SIFT_SCORES);
+                            if (scores != null) {
+                                JSONObject accountTakeover = scores.optJSONObject(Constants.SIFT_ACCOUNT_TAKEOVER);
+                                if (accountTakeover != null && accountTakeover.has(Constants.SIFT_SCORE)) {
+                                    if (isLoggingEnabled) {
+                                        LOG.info("Sift risk score: " +
+                                                accountTakeover.getDouble(Constants.SIFT_SCORE));
+                                    }
+                                    return accountTakeover.getDouble(Constants.SIFT_SCORE);
+                                }
+                            }
+                        }
+                    } else {
+                        LOG.error("Error occurred while getting the Sift risk score. Status code: " +
+                                response.getStatusLine().getStatusCode());
+                    }
+
+                }
+            }
         } catch (IOException e) {
             LOG.error("Error while executing the request: " + e);
         }
-        // create request
-
-        // execute request
-        // get response
-        // parse response
-        // return risk score
-
-        JSONObject pmap;
-        if (passedcustomparams != null) {
-            LOG.info("Passed custom paramKeys: " + passedcustomparams);
-            pmap = new JSONObject(passedcustomparams);
-            LOG.info("Passed custom paramKeys: " + pmap);
-        }
-
-        LOG.info("Inside the CallSiftOnLoginFunctionImpl");
-        return 0.7;
+        return 1;
     }
-
-    private String getAccountId(String tenantDomain) throws FrameworkException {
-
-        return getSiftConfigs(tenantDomain).get("sift.account.id");
-    }
-
-    private String getSiftApiKey(String tenantDomain) throws FrameworkException {
-
-        return getSiftConfigs(tenantDomain).get("sift.api.key");
-    }
-
-    Map<String, String> getSiftConfigs(String tenantDomain) throws FrameworkException {
-
-        try {
-            ConnectorConfig connectorConfig =
-                    getIdentityGovernanceService().getConnectorWithConfigs(tenantDomain, "sift-config");
-            if (connectorConfig == null) {
-                throw new FrameworkException("Sift configurations not found for tenant: " + tenantDomain);
-            }
-            Map<String, String> siftConfigs = new HashMap<>();
-            // Go through the connector config and get the sift configurations.
-            for (Property prop : connectorConfig.getProperties()) {
-                siftConfigs.put(prop.getName(), prop.getValue());
-            }
-
-            return siftConfigs;
-        } catch (IdentityGovernanceException e) {
-            throw new FrameworkException("Error while retrieving sift configurations: " + e.getMessage());
-        }
-
-    }
-
-    private IdentityGovernanceService getIdentityGovernanceService() {
-
-        return SiftDataHolder.getInstance().getIdentityGovernanceService();
-    }
-
-
-
-    // get login status from string
-    private LoginStatus getLoginStatus(String status) {
-
-        if (LoginStatus.LOGIN_SUCCESS.getStatus().equalsIgnoreCase(status)) {
-            return LoginStatus.LOGIN_SUCCESS;
-        } else if (LoginStatus.LOGIN_FAILED.getStatus().equalsIgnoreCase(status)) {
-            return LoginStatus.LOGIN_FAILED;
-        } else {
-            // TODO: remove pre-login status as this is not supported by sift.
-            return LoginStatus.PRE_LOGIN;
-        }
-    }
-
-//    private String resolvePayloadData(String key, JsAuthenticationContext context) {
-//
-//        switch (key) {
-//            case Constants.USER_ID_KEY:
-//                try {
-//                    return context.getWrapped().getLastAuthenticatedUser().getUserId();
-//                } catch (UserIdNotFoundException e) {
-//                    LOG.debug("Unable to resolve the user id.", e);
-//                    return null;
-//                }
-//            case Constants.USER_AGENT_KEY:
-//                return context.getWrapped().getReq
-//            case Constants.IP_KEY:
-//                return context.getWrapped().getRequest().getRemoteAddr();
-//            case Constants.SESSION_ID_KEY:
-//                // hash the value of the getContextIdentifier
-//                return context.getWrapped().getSessionIdentifier(); // DigestUtils.sha256Hex(cookie.getValue());
-//
-//
-//            default:
-//                return null;
-//        }
-//
-//        return context.getParameter(paramKey);
-//    }
-
 }

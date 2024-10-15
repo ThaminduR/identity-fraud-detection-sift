@@ -23,10 +23,8 @@ import org.apache.commons.lang.ArrayUtils;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.fraud.detection.sift.Constants;
 import org.wso2.carbon.identity.fraud.detection.sift.SiftConfigConnector;
-import org.wso2.carbon.identity.governance.IdentityMgtConstants;
 
 import java.util.List;
 import java.util.Map;
@@ -79,8 +77,6 @@ public class SiftConfigConnectorTest {
     public void testGetPropertyNameMapping() {
 
         Map<String, String> propertyNameMapping = siftConfigConnector.getPropertyNameMapping();
-        Assert.assertEquals(propertyNameMapping.get(Constants.SIFT_ACCOUNT_ID_PROP),
-                Constants.SIFT_ACCOUNT_ID_PROP_NAME);
         Assert.assertEquals(propertyNameMapping.get(Constants.SIFT_API_KEY_PROP), Constants.SIFT_API_KEY_PROP_NAME);
     }
 
@@ -88,8 +84,6 @@ public class SiftConfigConnectorTest {
     public void testGetPropertyDescriptionMapping() {
 
         Map<String, String> propertyDescriptionMapping = siftConfigConnector.getPropertyDescriptionMapping();
-        Assert.assertEquals(propertyDescriptionMapping.get(Constants.SIFT_ACCOUNT_ID_PROP),
-                Constants.SIFT_ACCOUNT_ID_PROP_DESC);
         Assert.assertEquals(propertyDescriptionMapping.get(Constants.SIFT_API_KEY_PROP),
                 Constants.SIFT_API_KEY_PROP_DESC);
     }
@@ -98,8 +92,7 @@ public class SiftConfigConnectorTest {
     public void testGetPropertyNames() {
 
         String[] propertyNames = siftConfigConnector.getPropertyNames();
-        Assert.assertEquals(propertyNames.length, 2);
-        Assert.assertTrue(ArrayUtils.contains(propertyNames, Constants.SIFT_ACCOUNT_ID_PROP));
+        Assert.assertEquals(propertyNames.length, 1);
         Assert.assertTrue(ArrayUtils.contains(propertyNames, Constants.SIFT_API_KEY_PROP));
     }
 
@@ -114,7 +107,6 @@ public class SiftConfigConnectorTest {
     public void testGetDefaultPropertyValuesWithTenantDomain() {
 
         Properties defaultPropertyValues = siftConfigConnector.getDefaultPropertyValues("");
-        Assert.assertEquals(defaultPropertyValues.getProperty(Constants.SIFT_ACCOUNT_ID_PROP), "");
         Assert.assertEquals(defaultPropertyValues.getProperty(Constants.SIFT_API_KEY_PROP), "");
     }
 
@@ -124,14 +116,5 @@ public class SiftConfigConnectorTest {
         List<String> confidentialPropertyValues = siftConfigConnector.getConfidentialPropertyValues("");
         Assert.assertEquals(confidentialPropertyValues.size(), 1);
         Assert.assertTrue(confidentialPropertyValues.contains(Constants.SIFT_API_KEY_PROP));
-    }
-
-    @Test
-    public void testGetMetaData() {
-
-        Map<String, Property> metaData = siftConfigConnector.getMetaData();
-        Assert.assertTrue(metaData.containsKey(Constants.SIFT_ACCOUNT_ID_PROP));
-        Assert.assertEquals(metaData.get(Constants.SIFT_ACCOUNT_ID_PROP).getType(),
-                IdentityMgtConstants.DataTypes.STRING.getValue());
     }
 }

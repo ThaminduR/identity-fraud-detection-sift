@@ -35,6 +35,8 @@ import org.wso2.carbon.identity.fraud.detection.sift.HttpClientManager;
 import org.wso2.carbon.identity.fraud.detection.sift.SiftConfigConnector;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunction;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunctionImpl;
+import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.PublishLoginToSiftFunction;
+import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.PublishLoginToSiftFunctionImpl;
 import org.wso2.carbon.identity.fraud.detection.sift.models.ConnectionConfig;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
@@ -49,6 +51,7 @@ import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
 public class SiftServiceComponent {
 
     public static final String FUNC_CALL_SIFT = "getSiftRiskScoreForLogin";
+    public static final String FUNC_PUBLISH_LOGIN_TO_SIFT = "publishLoginEventInfoToSift";
     private static final Log LOG = LogFactory.getLog(SiftServiceComponent.class);
     private CloseableHttpClient httpClient;
 
@@ -58,11 +61,13 @@ public class SiftServiceComponent {
         try {
             ConnectionConfig connectionConfig = new ConnectionConfig.Builder().build();
             httpClient = HttpClientManager.getInstance().getHttpClient(connectionConfig);
-            JsFunctionRegistry jsFunctionRegistry = SiftDataHolder.getInstance()
-                    .getJsFunctionRegistry();
+            JsFunctionRegistry jsFunctionRegistry = SiftDataHolder.getInstance().getJsFunctionRegistry();
             CallSiftOnLoginFunction getSiftRiskScoreForLogin = new CallSiftOnLoginFunctionImpl(httpClient);
+            PublishLoginToSiftFunction publishLoginToSiftFunction = new PublishLoginToSiftFunctionImpl(httpClient);
             jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, FUNC_CALL_SIFT,
                     getSiftRiskScoreForLogin);
+            jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, FUNC_PUBLISH_LOGIN_TO_SIFT,
+                    publishLoginToSiftFunction);
 
             BundleContext bundleContext = context.getBundleContext();
             SiftConfigConnector siftConfigConnector = new SiftConfigConnector();
@@ -79,6 +84,7 @@ public class SiftServiceComponent {
                 .getJsFunctionRegistry();
         if (jsFunctionRegistry != null) {
             jsFunctionRegistry.deRegister(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, FUNC_CALL_SIFT);
+            jsFunctionRegistry.deRegister(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, FUNC_PUBLISH_LOGIN_TO_SIFT);
         }
 
         if (httpClient != null) {

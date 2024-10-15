@@ -87,6 +87,7 @@
                             org.wso2.carbon.identity.fraud.detection.sift.*
                         </Export-Package>
                         <Import-Package>
+                            javax.servlet.*;version="${import.package.version.javax.servlet}",
                             org.wso2.carbon.identity.application.authentication.framework.*; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.common.model.*; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.util; version="${carbon.identity.package.import.version.range}",
