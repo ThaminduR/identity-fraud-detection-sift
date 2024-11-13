@@ -98,14 +98,17 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
                             }
                         }
                     } else {
-                        LOG.error("Error occurred while getting the Sift risk score. Status code: " +
-                                response.getStatusLine().getStatusCode());
+                        LOG.error("Error occurred from Sift while getting the risk score. Sift status: " +
+                                jsonResponse.getInt(Constants.SIFT_STATUS));
                     }
 
                 }
+            } else {
+                throw new FrameworkException("Error occurred while getting the Sift risk score. " +
+                        "Status code: " + response.getStatusLine().getStatusCode());
             }
         } catch (IOException e) {
-            LOG.error("Error while executing the request: " + e);
+            throw new FrameworkException("Error while executing the request: " + e);
         }
         return 1;
     }

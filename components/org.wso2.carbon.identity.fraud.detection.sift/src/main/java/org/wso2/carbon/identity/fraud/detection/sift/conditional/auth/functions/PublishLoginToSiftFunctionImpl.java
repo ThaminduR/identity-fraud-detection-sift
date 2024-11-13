@@ -10,11 +10,15 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.graalvm.polyglot.HostAccess;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.fraud.detection.sift.Constants;
 import org.wso2.carbon.identity.fraud.detection.sift.util.Util;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -52,13 +56,23 @@ public class PublishLoginToSiftFunctionImpl implements PublishLoginToSiftFunctio
 
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                LOG.debug("Successfully published login event information to Sift.");
+                JSONObject jsonResponse = new JSONObject(new JSONTokener(new InputStreamReader(
+                        response.getEntity().getContent(), StandardCharsets.UTF_8)));
+                if (jsonResponse.has(Constants.SIFT_STATUS) &&
+                        jsonResponse.getInt(Constants.SIFT_STATUS) == Constants.SIFT_STATUS_OK) {
+                    if (isLoggingEnabled) {
+                        LOG.info("Successfully published login event information to Sift.");
+                    }
+                } else {
+                    LOG.error("Error occurred from Sift while publishing login event information. Sift status: " +
+                            jsonResponse.getInt(Constants.SIFT_STATUS));
+                }
             } else {
-                LOG.error("Error occurred while publishing login event information to Sift. Status code: " +
-                        response.getStatusLine().getStatusCode());
+                throw new FrameworkException("Error occurred while getting the Sift risk score. " +
+                        "Status code: " + response.getStatusLine().getStatusCode());
             }
-        } catch (Exception e) {
-            LOG.error("Error occurred while publishing login event information to Sift.", e);
+        } catch (IOException e) {
+            throw new FrameworkException("Error occurred while publishing login event information to Sift.", e);
         }
     }
 }
