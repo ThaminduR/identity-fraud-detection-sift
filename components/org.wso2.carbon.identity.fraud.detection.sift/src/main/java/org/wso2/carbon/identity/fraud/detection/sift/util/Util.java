@@ -73,6 +73,7 @@ public class Util {
     }
 
     public static Map<String, Object> getPassedCustomParams(Object[] paramMap) {
+
         Map<String, Object> passedcustomparams = null;
         if (paramMap.length == 1) {
             if (paramMap[0] instanceof Map) {
@@ -87,7 +88,11 @@ public class Util {
 
     private static String getSiftApiKey(String tenantDomain) throws FrameworkException {
 
-        return getSiftConfigs(tenantDomain).get(SIFT_API_KEY_PROP);
+        String apiKey = getSiftConfigs(tenantDomain).get(SIFT_API_KEY_PROP);
+        if (apiKey == null) {
+            throw new FrameworkException("Sift API key not found for tenant: " + tenantDomain);
+        }
+        return apiKey;
     }
 
     static Map<String, String> getSiftConfigs(String tenantDomain) throws FrameworkException {
@@ -128,27 +133,30 @@ public class Util {
         }
     }
 
-    private static String resolvePayloadData(String key, JsAuthenticationContext context) {
+    private static String resolvePayloadData(String key, JsAuthenticationContext context) throws FrameworkException {
 
         switch (key) {
             case Constants.USER_ID_KEY:
-                try {
-                    return ((JsGraalAuthenticatedUser) context.getMember(Constants.CURRENT_KNOWN_SUBJECT))
-                            .getWrapped().getUserId();
-                } catch (UserIdNotFoundException e) {
-                    LOG.debug("Unable to resolve the user id.", e);
-                    return null;
-                }
+                return getUserId(context);
             case Constants.USER_AGENT_KEY:
                 return getUserAgent(context);
             case Constants.IP_KEY:
                 return getIpAddress(context);
             case Constants.SESSION_ID_KEY:
-                return context.getWrapped().getSessionIdentifier() != null
-                        ? DigestUtils.sha256Hex(context.getWrapped().getSessionIdentifier())
-                        : null;
+                return generateSessionHash(context);
             default:
                 return null;
+        }
+    }
+
+    private static String getUserId(JsAuthenticationContext context) {
+
+        try {
+            return ((JsGraalAuthenticatedUser) context.getMember(Constants.CURRENT_KNOWN_SUBJECT))
+                    .getWrapped().getUserId();
+        } catch (UserIdNotFoundException e) {
+            LOG.debug("Unable to resolve the user id.", e);
+            return null;
         }
     }
 
@@ -176,10 +184,20 @@ public class Util {
 
     public static boolean isLoggingEnabled(Map<String, Object> passedCustomParams) {
 
+        boolean isLoggingEnabled = false;
         if (passedCustomParams != null) {
-            return passedCustomParams.containsKey(Constants.LOGGING_ENABLED) &&
+            isLoggingEnabled = passedCustomParams.containsKey(Constants.LOGGING_ENABLED) &&
                     (Boolean) passedCustomParams.get(Constants.LOGGING_ENABLED);
+            passedCustomParams.remove(Constants.LOGGING_ENABLED);
         }
-        return false;
+        return isLoggingEnabled;
+    }
+
+    private static String generateSessionHash(JsAuthenticationContext context) throws FrameworkException {
+
+        if (context.getWrapped().getContextIdentifier() == null) {
+            throw new FrameworkException("Context identifier is null.");
+        }
+        return DigestUtils.sha256Hex(context.getWrapped().getContextIdentifier());
     }
 }
