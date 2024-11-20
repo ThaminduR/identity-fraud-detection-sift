@@ -91,6 +91,7 @@ public class Util {
     private static void processDefaultParameters(Map<String, Object> passedCustomParams, JSONObject payload) {
 
         if (passedCustomParams != null) {
+
             if (passedCustomParams.containsKey(Constants.IP_KEY)) {
                 String ip = (String) passedCustomParams.get(Constants.IP_KEY);
                 if (StringUtils.isNotBlank(ip)) {
@@ -121,6 +122,15 @@ public class Util {
                     payload.remove(Constants.BROWSER_KEY);
                 }
                 passedCustomParams.remove(Constants.USER_AGENT_KEY);
+            }
+
+            // As the user_id is a mandatory field, it shouldn't be removed from the payload.
+            if (passedCustomParams.containsKey(Constants.USER_ID_KEY)) {
+                String userId = (String) passedCustomParams.get(Constants.USER_ID_KEY);
+                if (StringUtils.isNotBlank(userId)) {
+                    payload.put(Constants.USER_ID_KEY, userId);
+                }
+                passedCustomParams.remove(Constants.USER_ID_KEY);
             }
         }
     }
