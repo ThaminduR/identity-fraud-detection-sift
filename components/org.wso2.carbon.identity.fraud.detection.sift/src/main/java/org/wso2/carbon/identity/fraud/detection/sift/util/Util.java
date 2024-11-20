@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.fraud.detection.sift.util;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
@@ -35,7 +36,6 @@ import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.governance.bean.ConnectorConfig;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequestWrapper;
@@ -53,34 +53,30 @@ public class Util {
 
     private static final Log LOG = LogFactory.getLog(Util.class);
 
-    public static JSONObject buildPayload(JsAuthenticationContext context, String loginStatus, List<String> paramKeys,
+    public static JSONObject buildPayload(JsAuthenticationContext context, String loginStatus,
                                           Map<String, Object> passedCustomParams)
             throws FrameworkException {
 
         String loginSts = getLoginStatus(loginStatus).getSiftValue();
 
+
         JSONObject payload = new JSONObject();
+
+        // Add the required parameters to the payload.
         payload.put(Constants.TYPE, LOGIN_TYPE);
         payload.put(Constants.API_KEY, getSiftApiKey(context.getWrapped().getTenantDomain()));
         payload.put(Constants.LOGIN_STATUS, loginSts);
+        payload.put(Constants.USER_ID_KEY, resolvePayloadData(Constants.USER_ID_KEY, context));
 
-        if (paramKeys.contains(Constants.USER_ID_KEY)) {
-            payload.put(Constants.USER_ID_KEY, resolvePayloadData(Constants.USER_ID_KEY, context));
-        }
+        Map<String, String> browserProperties = new HashMap<>();
+        browserProperties.put(Constants.USER_AGENT_KEY, resolvePayloadData(Constants.USER_AGENT_KEY, context));
+        payload.put(Constants.BROWSER_KEY, browserProperties);
 
-        if (paramKeys.contains(Constants.USER_AGENT_KEY)) {
-            Map<String, String> browserProperties = new HashMap<>();
-            browserProperties.put(Constants.USER_AGENT_KEY, resolvePayloadData(Constants.USER_AGENT_KEY, context));
-            payload.put(Constants.BROWSER_KEY, browserProperties);
-        }
+        payload.put(Constants.IP_KEY, resolvePayloadData(Constants.IP_KEY, context));
 
-        if (paramKeys.contains(Constants.IP_KEY)) {
-            payload.put(Constants.IP_KEY, resolvePayloadData(Constants.IP_KEY, context));
-        }
+        payload.put(Constants.SESSION_ID_KEY, resolvePayloadData(Constants.SESSION_ID_KEY, context));
 
-        if (paramKeys.contains(Constants.SESSION_ID_KEY)) {
-            payload.put(Constants.SESSION_ID_KEY, resolvePayloadData(Constants.SESSION_ID_KEY, context));
-        }
+        processDefaultParameters(passedCustomParams, payload);
 
         if (passedCustomParams != null) {
             for (Map.Entry<String, Object> entry : passedCustomParams.entrySet()) {
@@ -88,6 +84,45 @@ public class Util {
             }
         }
         return payload;
+    }
+
+    // Process the default parameters and remove them from the custom parameters. If the default parameters are
+    // passed as empty values, remove them from the payload.
+    private static void processDefaultParameters(Map<String, Object> passedCustomParams, JSONObject payload) {
+
+        if (passedCustomParams != null) {
+            if (passedCustomParams.containsKey(Constants.IP_KEY)) {
+                String ip = (String) passedCustomParams.get(Constants.IP_KEY);
+                if (StringUtils.isNotBlank(ip)) {
+                    payload.put(Constants.IP_KEY, ip);
+                } else {
+                    payload.remove(Constants.IP_KEY);
+                }
+                passedCustomParams.remove(Constants.IP_KEY);
+            }
+
+            if (passedCustomParams.containsKey(Constants.SESSION_ID_KEY)) {
+                String sessionId = (String) passedCustomParams.get(Constants.SESSION_ID_KEY);
+                if (StringUtils.isNotBlank(sessionId)) {
+                    payload.put(Constants.SESSION_ID_KEY, sessionId);
+                } else {
+                    payload.remove(Constants.SESSION_ID_KEY);
+                }
+                passedCustomParams.remove(Constants.SESSION_ID_KEY);
+            }
+
+            if (passedCustomParams.containsKey(Constants.USER_AGENT_KEY)) {
+                String userAgent = (String) passedCustomParams.get(Constants.USER_AGENT_KEY);
+                if (StringUtils.isNotBlank(userAgent)) {
+                    Map<String, String> browserProperties = new HashMap<>();
+                    browserProperties.put(Constants.USER_AGENT_KEY, userAgent);
+                    payload.put(Constants.BROWSER_KEY, browserProperties);
+                } else {
+                    payload.remove(Constants.BROWSER_KEY);
+                }
+                passedCustomParams.remove(Constants.USER_AGENT_KEY);
+            }
+        }
     }
 
     public static Map<String, Object> getPassedCustomParams(Object[] paramMap) {
@@ -172,7 +207,7 @@ public class Util {
 
         switch (key) {
             case Constants.USER_ID_KEY:
-                return getUserId(context);
+                return getHashedUserId(context);
             case Constants.USER_AGENT_KEY:
                 return getUserAgent(context);
             case Constants.IP_KEY:
@@ -184,11 +219,12 @@ public class Util {
         }
     }
 
-    private static String getUserId(JsAuthenticationContext context) {
+    private static String getHashedUserId(JsAuthenticationContext context) {
 
         try {
-            return ((JsGraalAuthenticatedUser) context.getMember(Constants.CURRENT_KNOWN_SUBJECT))
+            String userId = ((JsGraalAuthenticatedUser) context.getMember(Constants.CURRENT_KNOWN_SUBJECT))
                     .getWrapped().getUserId();
+            return DigestUtils.sha256Hex(userId);
         } catch (UserIdNotFoundException e) {
             LOG.debug("Unable to resolve the user id.", e);
             return null;

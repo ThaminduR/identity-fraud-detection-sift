@@ -44,7 +44,6 @@ import java.util.HashMap;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.anyMap;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -75,7 +74,7 @@ public class CallSiftOnLoginFunctionImplTest {
         utilMockedStatic = mockStatic(Util.class);
         when(Util.getPassedCustomParams(any())).thenReturn(new HashMap<>());
         when(Util.isLoggingEnabled(any())).thenReturn(true);
-        when(Util.buildPayload(any(), anyString(), anyList(), anyMap())).thenReturn(new JSONObject());
+        when(Util.buildPayload(any(), anyString(), anyMap())).thenReturn(new JSONObject());
     }
 
     @AfterClass

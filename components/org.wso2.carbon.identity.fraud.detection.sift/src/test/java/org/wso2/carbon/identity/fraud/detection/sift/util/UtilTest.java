@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.fraud.detection.sift.util;
 import org.json.JSONObject;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
@@ -37,9 +38,7 @@ import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.governance.bean.ConnectorConfig;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequestWrapper;
@@ -105,12 +104,10 @@ public class UtilTest {
         when(mockIdentityGovernanceService.getConnectorWithConfigs("carbon.super", Constants.CONNECTOR_NAME))
                 .thenReturn(connectorConfig);
 
-        List<String> paramKeys = Arrays.asList(Constants.USER_ID_KEY, Constants.USER_AGENT_KEY, Constants.IP_KEY,
-                Constants.SESSION_ID_KEY);
         Map<String, Object> passedCustomParams = new HashMap<>();
         passedCustomParams.put("customKey", "customValue");
 
-        JSONObject payload = Util.buildPayload(mockContext, "LOGIN_SUCCESS", paramKeys, passedCustomParams);
+        JSONObject payload = Util.buildPayload(mockContext, "LOGIN_SUCCESS", passedCustomParams);
         assertEquals(payload.getString(Constants.TYPE), Constants.LOGIN_TYPE);
         assertEquals(payload.getString(Constants.LOGIN_STATUS), "$success");
         assertEquals(payload.getString("customKey"), "customValue");
@@ -149,4 +146,27 @@ public class UtilTest {
         boolean result = Util.isLoggingEnabled(null);
         assertFalse(result);
     }
+
+    @Test
+    public void testGetMaskedSiftPayload() {
+        // Create a sample payload with an API key
+        JSONObject payload = new JSONObject();
+        payload.put("key1", "value1");
+        payload.put(Constants.API_KEY, "12345abcde");
+
+        // Call the method to test
+        String maskedPayload = Util.getMaskedSiftPayload(payload);
+
+        // Convert the result back to a JSONObject for verification
+        JSONObject result = new JSONObject(maskedPayload);
+
+        // Verify that the API key is masked correctly
+        String expectedMaskedApiKey = "12345*****";
+        Assert.assertEquals(result.getString(Constants.API_KEY), expectedMaskedApiKey);
+
+        // Verify that other keys are unchanged
+        Assert.assertEquals(result.getString("key1"), "value1");
+    }
+
+
 }

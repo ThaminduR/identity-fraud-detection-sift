@@ -39,7 +39,6 @@ import org.wso2.carbon.identity.fraud.detection.sift.util.Util;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
 
 import static org.wso2.carbon.identity.fraud.detection.sift.util.Util.getMaskedSiftPayload;
@@ -59,8 +58,8 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
 
     @Override
     @HostAccess.Export
-    public double getSiftRiskScoreForLogin(JsAuthenticationContext context, String loginStatus, List<String> paramKeys,
-                                           Object... paramMap) throws FrameworkException {
+    public double getSiftRiskScoreForLogin(JsAuthenticationContext context, String loginStatus, Object... paramMap)
+            throws FrameworkException {
 
         HttpPost request = new HttpPost(Constants.SIFT_API_URL + Constants.RETURN_SCORE_PARAM);
         request.addHeader(Constants.CONTENT_TYPE_HEADER, FrameworkConstants.ContentTypes.TYPE_APPLICATION_JSON);
@@ -69,7 +68,7 @@ public class CallSiftOnLoginFunctionImpl implements CallSiftOnLoginFunction {
 
         boolean isLoggingEnabled = Util.isLoggingEnabled(passedCustomParams);
 
-        JSONObject payload = Util.buildPayload(context, loginStatus, paramKeys, passedCustomParams);
+        JSONObject payload = Util.buildPayload(context, loginStatus, passedCustomParams);
 
         if (isLoggingEnabled) {
             LOG.info("Payload sent to Sift for risk score evaluation: " + getMaskedSiftPayload(payload));

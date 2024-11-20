@@ -38,7 +38,6 @@ import org.wso2.carbon.identity.fraud.detection.sift.util.Util;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
 
 import static org.wso2.carbon.identity.fraud.detection.sift.util.Util.getMaskedSiftPayload;
@@ -58,8 +57,8 @@ public class PublishLoginToSiftFunctionImpl implements PublishLoginToSiftFunctio
 
     @Override
     @HostAccess.Export
-    public void publishLoginEventToSift(JsAuthenticationContext context, String loginStatus, List<String> paramKeys,
-                                        Object... paramMap) throws FrameworkException {
+    public void publishLoginEventToSift(JsAuthenticationContext context, String loginStatus, Object... paramMap)
+            throws FrameworkException {
 
         HttpPost request = new HttpPost(Constants.SIFT_API_URL);
         request.addHeader(Constants.CONTENT_TYPE_HEADER, FrameworkConstants.ContentTypes.TYPE_APPLICATION_JSON);
@@ -68,7 +67,7 @@ public class PublishLoginToSiftFunctionImpl implements PublishLoginToSiftFunctio
 
         boolean isLoggingEnabled = Util.isLoggingEnabled(passedCustomParams);
 
-        JSONObject payload = Util.buildPayload(context, loginStatus, paramKeys, passedCustomParams);
+        JSONObject payload = Util.buildPayload(context, loginStatus, passedCustomParams);
 
         if (isLoggingEnabled) {
             LOG.info("Payload sent to Sift for login event publishing: " + getMaskedSiftPayload(payload));
