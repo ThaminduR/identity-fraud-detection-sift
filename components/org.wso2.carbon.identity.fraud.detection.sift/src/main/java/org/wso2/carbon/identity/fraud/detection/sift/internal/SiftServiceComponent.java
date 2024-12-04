@@ -32,7 +32,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.authentication.framework.JsFunctionRegistry;
 import org.wso2.carbon.identity.core.util.IdentityCoreInitializedEvent;
 import org.wso2.carbon.identity.fraud.detection.sift.HttpClientManager;
-import org.wso2.carbon.identity.fraud.detection.sift.SiftConfigConnector;
+import org.wso2.carbon.identity.fraud.detection.sift.SiftConnectorConfig;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunction;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunctionImpl;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.PublishLoginToSiftFunction;
@@ -70,7 +70,7 @@ public class SiftServiceComponent {
                     publishLoginToSiftFunction);
 
             BundleContext bundleContext = context.getBundleContext();
-            SiftConfigConnector siftConfigConnector = new SiftConfigConnector();
+            SiftConnectorConfig siftConfigConnector = new SiftConnectorConfig();
             bundleContext.registerService(IdentityConnectorConfig.class.getName(), siftConfigConnector, null);
         } catch (Throwable e) {
             LOG.error("Error while activating SiftServiceComponent.", e);

@@ -38,7 +38,7 @@ import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_K
 /**
  * Sift Config Connector containing the configurations required for integrating with Sift.
  */
-public class SiftConfigConnector implements IdentityConnectorConfig {
+public class SiftConnectorConfig implements IdentityConnectorConfig {
 
     @Override
     public String getName() {
@@ -97,11 +97,8 @@ public class SiftConfigConnector implements IdentityConnectorConfig {
     @Override
     public Properties getDefaultPropertyValues(String tenantDomain) {
 
-        Map<String, String> defaultProperties = new HashMap<>();
-
-        defaultProperties.put(SIFT_API_KEY_PROP, "");
         Properties properties = new Properties();
-        properties.putAll(defaultProperties);
+        properties.put(SIFT_API_KEY_PROP, "");
         return properties;
     }
 

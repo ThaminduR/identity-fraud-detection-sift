@@ -11,7 +11,7 @@ Sift uses machine learning and real-time data analysis to detect fraud. You can 
 1. Clone the `identity-fraud-sift-int` repository.
 2. Build the project by running the ```mvn clean install``` command in the root directory.
 
-Note : The latest project artifacts can also be downloaded from the Connector Store.
+Note : The latest project artifacts can also be downloaded from the Connector Store (https://store.wso2.com/connector/identity-fraud-detection-sift). 
 
 **Step 2:** Deploy the Sift connector
 

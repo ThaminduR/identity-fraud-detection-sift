@@ -27,7 +27,7 @@
             <class name="org.wso2.carbon.identity.fraud.detection.sift.util.UtilTest"/>
             <class name="org.wso2.carbon.identity.fraud.detection.sift.ConnectionConfigTest"/>
             <class name="org.wso2.carbon.identity.fraud.detection.sift.HttpClientManagerTest"/>
-            <class name="org.wso2.carbon.identity.fraud.detection.sift.SiftConfigConnectorTest"/>
+            <class name="org.wso2.carbon.identity.fraud.detection.sift.SiftConnectorConfigTest"/>
         </classes>
     </test>
 </suite>

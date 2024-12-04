@@ -31,57 +31,57 @@ import java.util.Properties;
 /**
  * Test class for SiftConfigConnector.
  */
-public class SiftConfigConnectorTest {
+public class SiftConnectorConfigTest {
 
-    private SiftConfigConnector siftConfigConnector;
+    private SiftConnectorConfig siftConnectorConfig;
 
     @BeforeClass
     public void setUp() {
 
-        siftConfigConnector = new SiftConfigConnector();
+        siftConnectorConfig = new SiftConnectorConfig();
     }
 
     @Test
     public void testGetName() {
 
-        Assert.assertEquals(siftConfigConnector.getName(), Constants.CONNECTOR_NAME);
+        Assert.assertEquals(siftConnectorConfig.getName(), Constants.CONNECTOR_NAME);
     }
 
     @Test
     public void testGetFriendlyName() {
 
-        Assert.assertEquals(siftConfigConnector.getFriendlyName(), Constants.CONNECTOR_FRIENDLY_NAME);
+        Assert.assertEquals(siftConnectorConfig.getFriendlyName(), Constants.CONNECTOR_FRIENDLY_NAME);
     }
 
     @Test
     public void testGetCategory() {
 
-        Assert.assertEquals(siftConfigConnector.getCategory(), Constants.CONNECTOR_CATEGORY);
+        Assert.assertEquals(siftConnectorConfig.getCategory(), Constants.CONNECTOR_CATEGORY);
     }
 
     @Test
     public void testGetSubCategory() {
 
-        Assert.assertEquals(siftConfigConnector.getSubCategory(), Constants.CONNECTOR_SUB_CATEGORY);
+        Assert.assertEquals(siftConnectorConfig.getSubCategory(), Constants.CONNECTOR_SUB_CATEGORY);
     }
 
     @Test
     public void testGetOrder() {
 
-        Assert.assertEquals(siftConfigConnector.getOrder(), Constants.CONNECTOR_ORDER);
+        Assert.assertEquals(siftConnectorConfig.getOrder(), Constants.CONNECTOR_ORDER);
     }
 
     @Test
     public void testGetPropertyNameMapping() {
 
-        Map<String, String> propertyNameMapping = siftConfigConnector.getPropertyNameMapping();
+        Map<String, String> propertyNameMapping = siftConnectorConfig.getPropertyNameMapping();
         Assert.assertEquals(propertyNameMapping.get(Constants.SIFT_API_KEY_PROP), Constants.SIFT_API_KEY_PROP_NAME);
     }
 
     @Test
     public void testGetPropertyDescriptionMapping() {
 
-        Map<String, String> propertyDescriptionMapping = siftConfigConnector.getPropertyDescriptionMapping();
+        Map<String, String> propertyDescriptionMapping = siftConnectorConfig.getPropertyDescriptionMapping();
         Assert.assertEquals(propertyDescriptionMapping.get(Constants.SIFT_API_KEY_PROP),
                 Constants.SIFT_API_KEY_PROP_DESC);
     }
@@ -89,7 +89,7 @@ public class SiftConfigConnectorTest {
     @Test
     public void testGetPropertyNames() {
 
-        String[] propertyNames = siftConfigConnector.getPropertyNames();
+        String[] propertyNames = siftConnectorConfig.getPropertyNames();
         Assert.assertEquals(propertyNames.length, 1);
         Assert.assertTrue(ArrayUtils.contains(propertyNames, Constants.SIFT_API_KEY_PROP));
     }
@@ -97,21 +97,21 @@ public class SiftConfigConnectorTest {
     @Test
     public void testGetDefaultPropertyValues() {
 
-        Map<String, String> defaultPropertyValues = siftConfigConnector.getDefaultPropertyValues(null, "");
+        Map<String, String> defaultPropertyValues = siftConnectorConfig.getDefaultPropertyValues(null, "");
         Assert.assertTrue(MapUtils.isEmpty(defaultPropertyValues));
     }
 
     @Test
     public void testGetDefaultPropertyValuesWithTenantDomain() {
 
-        Properties defaultPropertyValues = siftConfigConnector.getDefaultPropertyValues("");
+        Properties defaultPropertyValues = siftConnectorConfig.getDefaultPropertyValues("");
         Assert.assertEquals(defaultPropertyValues.getProperty(Constants.SIFT_API_KEY_PROP), "");
     }
 
     @Test
     public void testGetConfidentialPropertyValues() {
 
-        List<String> confidentialPropertyValues = siftConfigConnector.getConfidentialPropertyValues("");
+        List<String> confidentialPropertyValues = siftConnectorConfig.getConfidentialPropertyValues("");
         Assert.assertEquals(confidentialPropertyValues.size(), 1);
         Assert.assertTrue(confidentialPropertyValues.contains(Constants.SIFT_API_KEY_PROP));
     }
