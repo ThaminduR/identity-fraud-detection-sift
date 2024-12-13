@@ -7,7 +7,7 @@ Sift uses machine learning and real-time data analysis to detect fraud. You can 
 
 ## Install the Sift connector
 
-The latest project artifacts can also be downloaded from the Connector Store (https://store.wso2.com/connector/identity-fraud-detection-sift). 
+The latest project artifacts can be downloaded from the Connector Store (https://store.wso2.com/connector/identity-fraud-detection-sift). 
 
 **Step 1:** Deploy the Sift connector
 
@@ -31,7 +31,7 @@ WSO2 Identity Server offers the following Sift-related functions that can be uti
 **`getSiftRiskScoreForLogin()`**
 
 - This function returns the Sift risk score for a given login event, which is a value between 0 and 1. Higher the score, greater the risk.
-- In the case of an error, this function returns -1. An error can occur due to an invalid API key, network issues, or Sift server errors.
+- If an error occurs due to an invalid API key, network issue or a Sift server issue, this function returns a value of -1.
 - The function takes the following arguments.
     - `AuthenticationContext` - current authentication context.
     - `LoginStatus` - Whether the user authentication was successful or not. Accepted values `LOGIN_SUCCESS`, `LOGIN_FAILED`.
