@@ -29,14 +29,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.fraud.detection.sift.util.Util;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,10 +50,11 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit tests for PublishLoginToSiftFunctionImpl class.
+ */
 public class PublishLoginToSiftFunctionImplTest {
 
     @Mock
@@ -66,15 +71,24 @@ public class PublishLoginToSiftFunctionImplTest {
 
     private MockedStatic<Util> utilMockedStatic;
 
+    private ByteArrayOutputStream logOutput;
+
     @BeforeClass
     public void setUp() throws FrameworkException {
 
         MockitoAnnotations.openMocks(this);
-        // Mocking Util methods
         utilMockedStatic = mockStatic(Util.class);
         when(Util.getPassedCustomParams(any())).thenReturn(new HashMap<>());
         when(Util.isLoggingEnabled(any())).thenReturn(true);
         when(Util.buildPayload(any(), anyString(), anyMap())).thenReturn(new JSONObject());
+    }
+
+    @BeforeMethod
+    public void redirectOutputStreams() {
+
+        // Redirect System.out to capture logs.
+        logOutput = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(logOutput));
     }
 
     @AfterClass
@@ -83,10 +97,27 @@ public class PublishLoginToSiftFunctionImplTest {
         utilMockedStatic.close();
     }
 
-    @Test(priority = 0)
-    public void testPublishLoginEventToSift_Success() throws Exception {
+    @Test()
+    public void testPublishLoginEventToSiftSuccess() throws Exception {
 
-        // Mocking the response
+        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+        StatusLine statusLine = mock(StatusLine.class);
+        when(httpResponse.getStatusLine()).thenReturn(statusLine);
+        when(httpResponse.getStatusLine().getStatusCode()).thenReturn(HttpStatus.SC_OK);
+        when(httpResponse.getEntity()).thenReturn(httpEntity);
+        when(httpEntity.getContent())
+                .thenReturn(new ByteArrayInputStream("{\"status\":0}".getBytes(StandardCharsets.UTF_8)));
+
+        publishLoginToSiftFunction.publishLoginEventToSift(
+                mock(JsAuthenticationContext.class), "LOGIN_SUCCESS", new ArrayList<>(),
+                new HashMap<String, Object>());
+
+        Assert.assertTrue(logOutput.toString().contains("Successfully published login event information to Sift."));
+    }
+
+    @Test()
+    public void testPublishLoginEventToSiftSiftError() throws Exception {
+
         when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
         StatusLine statusLine = mock(StatusLine.class);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
@@ -95,30 +126,28 @@ public class PublishLoginToSiftFunctionImplTest {
         when(httpEntity.getContent())
                 .thenReturn(new ByteArrayInputStream("{\"status\":1}".getBytes(StandardCharsets.UTF_8)));
 
-        // Calling the method
         publishLoginToSiftFunction.publishLoginEventToSift(
                 mock(JsAuthenticationContext.class), "LOGIN_SUCCESS", new ArrayList<>(),
                 new HashMap<String, Object>());
 
-        // Verifying the interactions
-        verify(httpClient, times(1)).execute(any(HttpPost.class));
+        Assert.assertTrue(logOutput.toString().contains("Error occurred from Sift while publishing login event" +
+                " information. Received Sift status: 1"));
     }
 
-    @Test(priority = 1)
-    public void testPublishLoginEventToSift_ErrorResponse() throws Exception {
+    @Test()
+    public void testPublishLoginEventToSiftErrorResponse() throws Exception {
 
-        // Mocking the response
         when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
         StatusLine statusLine = mock(StatusLine.class);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(httpResponse.getStatusLine().getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 
-        // Calling the method
         publishLoginToSiftFunction.publishLoginEventToSift(
                 mock(JsAuthenticationContext.class), "LOGIN_SUCCESS", new ArrayList<>(),
                 new HashMap<String, Object>());
 
-        // Verifying the interactions
-        verify(httpClient, times(2)).execute(any(HttpPost.class));
+        Assert.assertTrue(logOutput.toString().contains("Error occurred while publishing login event information" +
+                " to Sift. HTTP Status code: 500"));
+
     }
 }

@@ -85,26 +85,22 @@ public class Constants {
     public enum LoginStatus {
 
         LOGIN_SUCCESS("LOGIN_SUCCESS", "$success"),
-        LOGIN_FAILED("LOGIN_FAILED", "$failure"),
-        PRE_LOGIN("PRE_LOGIN", null); // Sift does not have a pre-login status.
+        LOGIN_FAILED("LOGIN_FAILED", "$failure");
 
         private final String status;
         private final String siftValue;
 
-        // constructor
         LoginStatus(String status, String siftValue) {
 
             this.status = status;
             this.siftValue = siftValue;
         }
 
-        // get status
         public String getStatus() {
 
             return status;
         }
 
-        // get sift value
         public String getSiftValue() {
 
             return siftValue;

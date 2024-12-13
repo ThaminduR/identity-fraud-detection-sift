@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.fraud.detection.sift.util;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONObject;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -55,6 +56,16 @@ import static org.testng.Assert.assertTrue;
  */
 public class UtilTest {
 
+    public static final String USER_ID = "user123";
+    public static final String SESSION_ID = "session123";
+    public static final String IP_ADDRESS = "127.0.0.1";
+    public static final String USER_AGENT = "Mozilla/5.0";
+    public static final String CUSTOM_USER_ID = "customUserId";
+    public static final String CUSTOM_KEY = "customKey";
+    public static final String CUSTOM_VALUE = "customValue";
+    public static final String CUSTOM_IP_ADDRESS = "192.168.8.1";
+    public static final String CUSTOM_USER_AGENT = "customUserAgent";
+
     @Mock
     private JsAuthenticationContext mockContext;
 
@@ -63,39 +74,36 @@ public class UtilTest {
 
     @BeforeMethod
     public void setUp() {
+
         MockitoAnnotations.openMocks(this);
         SiftDataHolder.getInstance().setIdentityGovernanceService(mockIdentityGovernanceService);
     }
 
     @Test
-    public void testBuildPayload() throws FrameworkException, IdentityGovernanceException, UserIdNotFoundException {
+    public void testBuildDefaultPayload() throws FrameworkException, IdentityGovernanceException,
+            UserIdNotFoundException {
 
-        // Mock the wrapped context
         AuthenticationContext wrappedContext = mock(AuthenticationContext.class);
         when(mockContext.getWrapped()).thenReturn(wrappedContext);
 
         when(mockContext.getWrapped().getTenantDomain()).thenReturn("carbon.super");
-        when(mockContext.getWrapped().getContextIdentifier()).thenReturn("session123");
+        when(mockContext.getWrapped().getContextIdentifier()).thenReturn(SESSION_ID);
 
-        // Mock the JsGraalAuthenticatedUser
         JsGraalAuthenticatedUser mockUser = mock(JsGraalAuthenticatedUser.class);
         AuthenticatedUser authenticatedUser = mock(AuthenticatedUser.class);
         when(mockUser.getWrapped()).thenReturn(authenticatedUser);
-        when(mockUser.getWrapped().getUserId()).thenReturn("user123");
+        when(mockUser.getWrapped().getUserId()).thenReturn(USER_ID);
 
-        // Mock the context.getMember(Constants.CURRENT_KNOWN_SUBJECT)
         when(mockContext.getMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(mockUser);
 
-        // Mock the HTTP servlet request
         HttpServletRequestWrapper httpServletRequestWrapper = mock(HttpServletRequestWrapper.class);
-        when(httpServletRequestWrapper.getHeader(Constants.USER_AGENT_HEADER)).thenReturn("Mozilla/5.0");
-        when(httpServletRequestWrapper.getRemoteAddr()).thenReturn("127.0.0.1");
+        when(httpServletRequestWrapper.getHeader(Constants.USER_AGENT_HEADER)).thenReturn(USER_AGENT);
+        when(httpServletRequestWrapper.getRemoteAddr()).thenReturn(IP_ADDRESS);
 
         TransientObjectWrapper<HttpServletRequestWrapper> transientObjectWrapper = mock(TransientObjectWrapper.class);
         when(transientObjectWrapper.getWrapped()).thenReturn(httpServletRequestWrapper);
         when(wrappedContext.getParameter(Constants.HTTP_SERVLET_REQUEST)).thenReturn(transientObjectWrapper);
 
-        // Mock the IdentityGovernanceService response
         ConnectorConfig connectorConfig = mock(ConnectorConfig.class);
         Property property = new Property();
         property.setName(Constants.SIFT_API_KEY_PROP);
@@ -104,13 +112,121 @@ public class UtilTest {
         when(mockIdentityGovernanceService.getConnectorWithConfigs("carbon.super", Constants.CONNECTOR_NAME))
                 .thenReturn(connectorConfig);
 
-        Map<String, Object> passedCustomParams = new HashMap<>();
-        passedCustomParams.put("customKey", "customValue");
+        HashMap<String, Object> passedCustomParams = new HashMap<>();
 
         JSONObject payload = Util.buildPayload(mockContext, "LOGIN_SUCCESS", passedCustomParams);
         assertEquals(payload.getString(Constants.TYPE), Constants.LOGIN_TYPE);
         assertEquals(payload.getString(Constants.LOGIN_STATUS), "$success");
-        assertEquals(payload.getString("customKey"), "customValue");
+        assertEquals(payload.getString(Constants.USER_ID_KEY), DigestUtils.sha256Hex(USER_ID));
+        assertEquals(payload.getString(Constants.SESSION_ID_KEY), DigestUtils.sha256Hex(SESSION_ID));
+        assertEquals(payload.getString(Constants.IP_KEY), IP_ADDRESS);
+        assertEquals(payload.getJSONObject(Constants.BROWSER_KEY).getString(Constants.USER_AGENT_KEY), USER_AGENT);
+    }
+
+    /*
+     * Test the buildPayload method with a custom user ID and an empty IP address and session id.
+     */
+    @Test
+    public void testBuildModifiedPayload() throws FrameworkException, IdentityGovernanceException,
+            UserIdNotFoundException {
+
+        AuthenticationContext wrappedContext = mock(AuthenticationContext.class);
+        when(mockContext.getWrapped()).thenReturn(wrappedContext);
+
+        when(mockContext.getWrapped().getTenantDomain()).thenReturn("carbon.super");
+        when(mockContext.getWrapped().getContextIdentifier()).thenReturn(SESSION_ID);
+
+        JsGraalAuthenticatedUser mockUser = mock(JsGraalAuthenticatedUser.class);
+        AuthenticatedUser authenticatedUser = mock(AuthenticatedUser.class);
+        when(mockUser.getWrapped()).thenReturn(authenticatedUser);
+        when(mockUser.getWrapped().getUserId()).thenReturn(USER_ID);
+
+        when(mockContext.getMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(mockUser);
+
+        HttpServletRequestWrapper httpServletRequestWrapper = mock(HttpServletRequestWrapper.class);
+        when(httpServletRequestWrapper.getHeader(Constants.USER_AGENT_HEADER)).thenReturn(USER_AGENT);
+        when(httpServletRequestWrapper.getRemoteAddr()).thenReturn(IP_ADDRESS);
+
+        TransientObjectWrapper<HttpServletRequestWrapper> transientObjectWrapper = mock(TransientObjectWrapper.class);
+        when(transientObjectWrapper.getWrapped()).thenReturn(httpServletRequestWrapper);
+        when(wrappedContext.getParameter(Constants.HTTP_SERVLET_REQUEST)).thenReturn(transientObjectWrapper);
+
+        ConnectorConfig connectorConfig = mock(ConnectorConfig.class);
+        Property property = new Property();
+        property.setName(Constants.SIFT_API_KEY_PROP);
+        property.setValue("dummyApiKey");
+        when(connectorConfig.getProperties()).thenReturn(new Property[]{property});
+        when(mockIdentityGovernanceService.getConnectorWithConfigs("carbon.super", Constants.CONNECTOR_NAME))
+                .thenReturn(connectorConfig);
+
+        HashMap<String, Object> passedCustomParams = new HashMap<>();
+        passedCustomParams.put(CUSTOM_KEY, CUSTOM_VALUE);
+        passedCustomParams.put(Constants.USER_ID_KEY, CUSTOM_USER_ID);
+        passedCustomParams.put(Constants.IP_KEY, "");
+        passedCustomParams.put(Constants.SESSION_ID_KEY, "");
+        passedCustomParams.put(Constants.LOGGING_ENABLED, true);
+
+        JSONObject payload = Util.buildPayload(mockContext, "LOGIN_FAILED", passedCustomParams);
+        assertEquals(payload.getString(Constants.TYPE), Constants.LOGIN_TYPE);
+        assertEquals(payload.getString(Constants.LOGIN_STATUS), "$failure");
+        assertEquals(payload.getString(Constants.USER_ID_KEY), CUSTOM_USER_ID);
+        assertTrue(payload.isNull(Constants.SESSION_ID_KEY));
+        assertTrue(payload.isNull(Constants.IP_KEY));
+        assertEquals(payload.getJSONObject(Constants.BROWSER_KEY).getString(Constants.USER_AGENT_KEY), USER_AGENT);
+        assertEquals(payload.getString(CUSTOM_KEY), CUSTOM_VALUE);
+    }
+
+    /*
+     * Test the buildPayload method with a replaced IP address and user agent.
+     */
+    @Test
+    public void testBuildReplacedPayload() throws FrameworkException, IdentityGovernanceException,
+            UserIdNotFoundException {
+
+        AuthenticationContext wrappedContext = mock(AuthenticationContext.class);
+        when(mockContext.getWrapped()).thenReturn(wrappedContext);
+
+        when(mockContext.getWrapped().getTenantDomain()).thenReturn("carbon.super");
+        when(mockContext.getWrapped().getContextIdentifier()).thenReturn(SESSION_ID);
+
+        JsGraalAuthenticatedUser mockUser = mock(JsGraalAuthenticatedUser.class);
+        AuthenticatedUser authenticatedUser = mock(AuthenticatedUser.class);
+        when(mockUser.getWrapped()).thenReturn(authenticatedUser);
+        when(mockUser.getWrapped().getUserId()).thenReturn(USER_ID);
+
+        when(mockContext.getMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(mockUser);
+
+        HttpServletRequestWrapper httpServletRequestWrapper = mock(HttpServletRequestWrapper.class);
+        when(httpServletRequestWrapper.getHeader(Constants.USER_AGENT_HEADER)).thenReturn(USER_AGENT);
+        when(httpServletRequestWrapper.getRemoteAddr()).thenReturn(IP_ADDRESS);
+
+        TransientObjectWrapper<HttpServletRequestWrapper> transientObjectWrapper = mock(TransientObjectWrapper.class);
+        when(transientObjectWrapper.getWrapped()).thenReturn(httpServletRequestWrapper);
+        when(wrappedContext.getParameter(Constants.HTTP_SERVLET_REQUEST)).thenReturn(transientObjectWrapper);
+
+        ConnectorConfig connectorConfig = mock(ConnectorConfig.class);
+        Property property = new Property();
+        property.setName(Constants.SIFT_API_KEY_PROP);
+        property.setValue("dummyApiKey");
+        when(connectorConfig.getProperties()).thenReturn(new Property[]{property});
+        when(mockIdentityGovernanceService.getConnectorWithConfigs("carbon.super", Constants.CONNECTOR_NAME))
+                .thenReturn(connectorConfig);
+
+        HashMap<String, Object> passedCustomParams = new HashMap<>();
+        passedCustomParams.put(CUSTOM_KEY, CUSTOM_VALUE);
+        passedCustomParams.put(Constants.IP_KEY, CUSTOM_IP_ADDRESS);
+        passedCustomParams.put(Constants.USER_AGENT_KEY, CUSTOM_USER_AGENT);
+        passedCustomParams.put(Constants.LOGGING_ENABLED, true);
+
+        JSONObject payload = Util.buildPayload(mockContext, "LOGIN_SUCCESS", passedCustomParams);
+        assertEquals(payload.getString(Constants.TYPE), Constants.LOGIN_TYPE);
+        assertEquals(payload.getString(Constants.LOGIN_STATUS), "$success");
+        assertEquals(payload.getString(Constants.USER_ID_KEY), DigestUtils.sha256Hex(USER_ID));
+        assertEquals(payload.getString(Constants.SESSION_ID_KEY), DigestUtils.sha256Hex(SESSION_ID));
+        assertEquals(payload.getString(Constants.IP_KEY), CUSTOM_IP_ADDRESS);
+        assertEquals(payload.getJSONObject(Constants.BROWSER_KEY)
+                .getString(Constants.USER_AGENT_KEY), CUSTOM_USER_AGENT);
+        assertEquals(payload.getString(CUSTOM_KEY), CUSTOM_VALUE);
     }
 
     @Test
@@ -149,22 +265,21 @@ public class UtilTest {
 
     @Test
     public void testGetMaskedSiftPayload() {
-        // Create a sample payload with an API key
+
+        // Create a sample payload with an API key.
         JSONObject payload = new JSONObject();
         payload.put("key1", "value1");
         payload.put(Constants.API_KEY, "12345abcde");
 
-        // Call the method to test
         String maskedPayload = Util.getMaskedSiftPayload(payload);
 
-        // Convert the result back to a JSONObject for verification
         JSONObject result = new JSONObject(maskedPayload);
 
-        // Verify that the API key is masked correctly
+        // Verify that the API key is masked correctly.
         String expectedMaskedApiKey = "12345*****";
         Assert.assertEquals(result.getString(Constants.API_KEY), expectedMaskedApiKey);
 
-        // Verify that other keys are unchanged
+        // Verify that other keys are unchanged.
         Assert.assertEquals(result.getString("key1"), "value1");
     }
 

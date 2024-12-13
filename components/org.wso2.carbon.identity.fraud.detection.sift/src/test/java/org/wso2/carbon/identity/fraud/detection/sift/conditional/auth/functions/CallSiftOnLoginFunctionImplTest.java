@@ -32,12 +32,15 @@ import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.fraud.detection.sift.Constants;
 import org.wso2.carbon.identity.fraud.detection.sift.util.Util;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,7 +52,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
+/**
+ * Unit tests for CallSiftOnLoginFunctionImpl class.
+ */
 public class CallSiftOnLoginFunctionImplTest {
 
     @Mock
@@ -65,16 +72,27 @@ public class CallSiftOnLoginFunctionImplTest {
     private CallSiftOnLoginFunctionImpl callSiftOnLoginFunction;
 
     private MockedStatic<Util> utilMockedStatic;
+    private ByteArrayOutputStream logOutput;
+    private JSONObject payload;
 
     @BeforeClass
     public void setUp() throws FrameworkException {
 
         MockitoAnnotations.openMocks(this);
-        // Mocking Util methods
         utilMockedStatic = mockStatic(Util.class);
         when(Util.getPassedCustomParams(any())).thenReturn(new HashMap<>());
         when(Util.isLoggingEnabled(any())).thenReturn(true);
+        payload = new JSONObject();
+        payload.put(Constants.API_KEY, "testApiKey");
         when(Util.buildPayload(any(), anyString(), anyMap())).thenReturn(new JSONObject());
+    }
+
+    @BeforeMethod
+    public void redirectOutputStreams() {
+
+        // Redirect System.out to capture logs.
+        logOutput = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(logOutput));
     }
 
     @AfterClass
@@ -84,14 +102,29 @@ public class CallSiftOnLoginFunctionImplTest {
     }
 
     @Test
-    public void testGetSiftRiskScoreForLogin_Success() throws Exception {
+    public void testGetSiftRiskScoreForLoginSuccess() throws Exception {
 
-        // Mocking the response
         when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
         StatusLine statusLine = mock(StatusLine.class);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(httpResponse.getStatusLine().getStatusCode()).thenReturn(HttpStatus.SC_OK);
         when(httpResponse.getEntity()).thenReturn(httpEntity);
+
+        JSONObject jsonResponse = getJsonResponse();
+
+        when(httpEntity.getContent()).thenReturn(new StringEntity(jsonResponse.toString(), StandardCharsets.UTF_8)
+                .getContent());
+
+        double riskScore = callSiftOnLoginFunction.getSiftRiskScoreForLogin(
+                mock(JsAuthenticationContext.class), "LOGIN_SUCCESS", new ArrayList<>(),
+                new HashMap<String, Object>());
+
+        assertEquals(riskScore, 0.85);
+        assertTrue(logOutput.toString().contains("Sift risk score: 0.85"));
+        assertTrue(logOutput.toString().contains("Payload sent to Sift for risk score evaluation: "));
+    }
+
+    private static JSONObject getJsonResponse() {
 
         JSONObject jsonResponse = new JSONObject();
         jsonResponse.put(Constants.SIFT_STATUS, Constants.SIFT_STATUS_OK);
@@ -102,54 +135,76 @@ public class CallSiftOnLoginFunctionImplTest {
         scores.put(Constants.SIFT_ACCOUNT_TAKEOVER, accountTakeover);
         scoreResponse.put(Constants.SIFT_SCORES, scores);
         jsonResponse.put(Constants.SIFT_SCORE_RESPONSE, scoreResponse);
-
-        when(httpEntity.getContent()).thenReturn(new StringEntity(jsonResponse.toString(), StandardCharsets.UTF_8)
-                .getContent());
-
-        // Calling the method
-        double riskScore = callSiftOnLoginFunction.getSiftRiskScoreForLogin(
-                mock(JsAuthenticationContext.class), "LOGIN_SUCCESS", new ArrayList<>(),
-                new HashMap<String, Object>());
-
-        // Asserting the result
-        assertEquals(riskScore, 0.85);
+        return jsonResponse;
     }
 
     @Test
-    public void testGetSiftRiskScoreForLogin_ErrorResponse() throws Exception {
+    public void testGetSiftRiskScoreForLoginNullResponse() throws Exception {
 
-        // Mocking the response
         when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
         StatusLine statusLine = mock(StatusLine.class);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
-        when(httpResponse.getStatusLine().getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-        when(httpResponse.getEntity()).thenReturn(httpEntity);
+        when(httpResponse.getStatusLine().getStatusCode()).thenReturn(HttpStatus.SC_OK);
+        when(httpResponse.getEntity()).thenReturn(null);
 
-        // Calling the method
         double riskScore = callSiftOnLoginFunction.getSiftRiskScoreForLogin(
                 mock(JsAuthenticationContext.class), "LOGIN_SUCCESS", new ArrayList<>(),
                 new HashMap<String, Object>());
 
-        // Asserting the result
         assertEquals(riskScore, Constants.DEFAULT_ERROR_VALUE);
     }
 
     @Test
-    public void testGetSiftRiskScoreForLogin_Exception() throws Exception {
+    public void testGetSiftRiskScoreForLoginSiftError() throws Exception {
 
-        // Mocking the response
+        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+        StatusLine statusLine = mock(StatusLine.class);
+        when(httpResponse.getStatusLine()).thenReturn(statusLine);
+        when(httpResponse.getStatusLine().getStatusCode()).thenReturn(HttpStatus.SC_OK);
+        when(httpResponse.getEntity()).thenReturn(httpEntity);
+
+        JSONObject jsonResponse = new JSONObject();
+        jsonResponse.put(Constants.SIFT_STATUS, "2");
+
+        when(httpEntity.getContent()).thenReturn(new StringEntity(jsonResponse.toString(), StandardCharsets.UTF_8)
+                .getContent());
+
+        double riskScore = callSiftOnLoginFunction.getSiftRiskScoreForLogin(
+                mock(JsAuthenticationContext.class), "LOGIN_SUCCESS", new ArrayList<>(),
+                new HashMap<String, Object>());
+
+        assertEquals(riskScore, Constants.DEFAULT_ERROR_VALUE);
+    }
+
+    @Test
+    public void testGetSiftRiskScoreForLoginErrorResponse() throws Exception {
+
         when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
         StatusLine statusLine = mock(StatusLine.class);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(httpResponse.getStatusLine().getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         when(httpResponse.getEntity()).thenReturn(httpEntity);
 
-        // Calling the method
+        double riskScore = callSiftOnLoginFunction.getSiftRiskScoreForLogin(
+                mock(JsAuthenticationContext.class), "LOGIN_SUCCESS", new ArrayList<>(),
+                new HashMap<String, Object>());
+
+        assertEquals(riskScore, Constants.DEFAULT_ERROR_VALUE);
+    }
+
+    @Test
+    public void testGetSiftRiskScoreForLoginException() throws Exception {
+
+        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+        StatusLine statusLine = mock(StatusLine.class);
+        when(httpResponse.getStatusLine()).thenReturn(statusLine);
+        when(httpResponse.getStatusLine().getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        when(httpResponse.getEntity()).thenReturn(httpEntity);
+
         double riskScore = callSiftOnLoginFunction.getSiftRiskScoreForLogin(
                 mock(JsAuthenticationContext.class), "SUCCESS", new ArrayList<>(),
                 new HashMap<String, Object>());
 
-        // Asserting the result
         assertEquals(riskScore, Constants.DEFAULT_ERROR_VALUE);
     }
 }

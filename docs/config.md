@@ -7,16 +7,11 @@ Sift uses machine learning and real-time data analysis to detect fraud. You can 
 
 ## Install the Sift connector
 
-**Step 1:** Extract the project artifacts
-1. Clone the `identity-fraud-sift-int` repository.
-2. Build the project by running the ```mvn clean install``` command in the root directory.
+The latest project artifacts can also be downloaded from the Connector Store (https://store.wso2.com/connector/identity-fraud-detection-sift). 
 
-Note : The latest project artifacts can also be downloaded from the Connector Store (https://store.wso2.com/connector/identity-fraud-detection-sift). 
+**Step 1:** Deploy the Sift connector
 
-**Step 2:** Deploy the Sift connector
-
-1. In the cloned repository, navigate to the `/components/org.wso2.carbon.identity.fraud.detection.sift/target` directory.
-2. Copy the `org.wso2.carbon.identity.fraud.detection.sift-<version>-SNAPSHOT.jar` file to the `<IS_HOME>/repository/components/dropins` directory.
+1. Copy the `org.wso2.carbon.identity.fraud.detection.sift-<version>.jar` file to the `<IS_HOME>/repository/components/dropins` directory.
 3. Restart the WSO2 Identity Server.
 
 ## Access the Console UI for the Sift connector
@@ -36,7 +31,7 @@ WSO2 Identity Server offers the following Sift-related functions that can be uti
 **`getSiftRiskScoreForLogin()`**
 
 - This function returns the Sift risk score for a given login event, which is a value between 0 and 1. Higher the score, greater the risk.
-- In the case of an error, this function returns -1.
+- In the case of an error, this function returns -1. An error can occur due to an invalid API key, network issues, or Sift server errors.
 - The function takes the following arguments.
     - `AuthenticationContext` - current authentication context.
     - `LoginStatus` - Whether the user authentication was successful or not. Accepted values `LOGIN_SUCCESS`, `LOGIN_FAILED`.
@@ -63,8 +58,7 @@ var additionalParams = {
 
 ### Enable Logging
 
-
-Including `"isLoggingEnabled": true` as an additional parameter in the functions activates logging for Sift fraud detection. When used with `getSiftRiskScoreForLogin`, it logs the risk score returned by Sift, and when applied to `publishLoginEventToSift`, it logs the payload sent to Sift.
+Including `"isLoggingEnabled": true` as an additional parameter in the functions activates logging for Sift fraud detection. When used with `getSiftRiskScoreForLogin`, it logs the payload sent to Sift and the risk score returned by Sift, and when applied to `publishLoginEventToSift`, it logs the payload sent to Sift.
 
 ### Enable Sift fraud detection
 

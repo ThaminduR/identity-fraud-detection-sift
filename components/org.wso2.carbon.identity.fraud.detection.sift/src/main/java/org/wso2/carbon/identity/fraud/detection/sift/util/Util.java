@@ -53,13 +53,20 @@ public class Util {
 
     private static final Log LOG = LogFactory.getLog(Util.class);
 
+    /**
+     * Build the payload to be sent to Sift.
+     *
+     * @param context            Authentication context.
+     * @param loginStatus        Login status.
+     * @param passedCustomParams Custom parameters passed by the user.
+     * @return Payload to be sent to Sift.
+     * @throws FrameworkException If an error occurs while building the payload.
+     */
     public static JSONObject buildPayload(JsAuthenticationContext context, String loginStatus,
                                           Map<String, Object> passedCustomParams)
             throws FrameworkException {
 
         String loginSts = getLoginStatus(loginStatus).getSiftValue();
-
-
         JSONObject payload = new JSONObject();
 
         // Add the required parameters to the payload.
@@ -71,11 +78,8 @@ public class Util {
         Map<String, String> browserProperties = new HashMap<>();
         browserProperties.put(Constants.USER_AGENT_KEY, resolvePayloadData(Constants.USER_AGENT_KEY, context));
         payload.put(Constants.BROWSER_KEY, browserProperties);
-
         payload.put(Constants.IP_KEY, resolvePayloadData(Constants.IP_KEY, context));
-
         payload.put(Constants.SESSION_ID_KEY, resolvePayloadData(Constants.SESSION_ID_KEY, context));
-
         processDefaultParameters(passedCustomParams, payload);
 
         if (passedCustomParams != null) {
@@ -86,55 +90,68 @@ public class Util {
         return payload;
     }
 
-    // Process the default parameters and remove them from the custom parameters. If the default parameters are
-    // passed as empty values, remove them from the payload.
+    /**
+     * Process the default parameters and remove them from the custom parameters. If the default parameters are
+     * passed as empty values, remove them from the payload.
+     *
+     * @param passedCustomParams Custom parameters passed by the user.
+     * @param payload            Payload to be sent to Sift.
+     */
     private static void processDefaultParameters(Map<String, Object> passedCustomParams, JSONObject payload) {
 
-        if (passedCustomParams != null) {
-
-            if (passedCustomParams.containsKey(Constants.IP_KEY)) {
-                String ip = (String) passedCustomParams.get(Constants.IP_KEY);
-                if (StringUtils.isNotBlank(ip)) {
-                    payload.put(Constants.IP_KEY, ip);
-                } else {
-                    payload.remove(Constants.IP_KEY);
-                }
-                passedCustomParams.remove(Constants.IP_KEY);
-            }
-
-            if (passedCustomParams.containsKey(Constants.SESSION_ID_KEY)) {
-                String sessionId = (String) passedCustomParams.get(Constants.SESSION_ID_KEY);
-                if (StringUtils.isNotBlank(sessionId)) {
-                    payload.put(Constants.SESSION_ID_KEY, sessionId);
-                } else {
-                    payload.remove(Constants.SESSION_ID_KEY);
-                }
-                passedCustomParams.remove(Constants.SESSION_ID_KEY);
-            }
-
-            if (passedCustomParams.containsKey(Constants.USER_AGENT_KEY)) {
-                String userAgent = (String) passedCustomParams.get(Constants.USER_AGENT_KEY);
-                if (StringUtils.isNotBlank(userAgent)) {
-                    Map<String, String> browserProperties = new HashMap<>();
-                    browserProperties.put(Constants.USER_AGENT_KEY, userAgent);
-                    payload.put(Constants.BROWSER_KEY, browserProperties);
-                } else {
-                    payload.remove(Constants.BROWSER_KEY);
-                }
-                passedCustomParams.remove(Constants.USER_AGENT_KEY);
-            }
-
-            // As the user_id is a mandatory field, it shouldn't be removed from the payload.
-            if (passedCustomParams.containsKey(Constants.USER_ID_KEY)) {
-                String userId = (String) passedCustomParams.get(Constants.USER_ID_KEY);
-                if (StringUtils.isNotBlank(userId)) {
-                    payload.put(Constants.USER_ID_KEY, userId);
-                }
-                passedCustomParams.remove(Constants.USER_ID_KEY);
-            }
+        if (passedCustomParams == null) {
+            return;
         }
+
+        if (passedCustomParams.containsKey(Constants.IP_KEY)) {
+            String ip = (String) passedCustomParams.get(Constants.IP_KEY);
+            if (StringUtils.isNotBlank(ip)) {
+                payload.put(Constants.IP_KEY, ip);
+            } else {
+                payload.remove(Constants.IP_KEY);
+            }
+            passedCustomParams.remove(Constants.IP_KEY);
+        }
+
+        if (passedCustomParams.containsKey(Constants.SESSION_ID_KEY)) {
+            String sessionId = (String) passedCustomParams.get(Constants.SESSION_ID_KEY);
+            if (StringUtils.isNotBlank(sessionId)) {
+                payload.put(Constants.SESSION_ID_KEY, sessionId);
+            } else {
+                payload.remove(Constants.SESSION_ID_KEY);
+            }
+            passedCustomParams.remove(Constants.SESSION_ID_KEY);
+        }
+
+        if (passedCustomParams.containsKey(Constants.USER_AGENT_KEY)) {
+            String userAgent = (String) passedCustomParams.get(Constants.USER_AGENT_KEY);
+            if (StringUtils.isNotBlank(userAgent)) {
+                Map<String, String> browserProperties = new HashMap<>();
+                browserProperties.put(Constants.USER_AGENT_KEY, userAgent);
+                payload.put(Constants.BROWSER_KEY, browserProperties);
+            } else {
+                payload.remove(Constants.BROWSER_KEY);
+            }
+            passedCustomParams.remove(Constants.USER_AGENT_KEY);
+        }
+
+        // As the user_id is a mandatory field, it shouldn't be removed from the payload.
+        if (passedCustomParams.containsKey(Constants.USER_ID_KEY)) {
+            String userId = (String) passedCustomParams.get(Constants.USER_ID_KEY);
+            if (StringUtils.isNotBlank(userId)) {
+                payload.put(Constants.USER_ID_KEY, userId);
+            }
+            passedCustomParams.remove(Constants.USER_ID_KEY);
+        }
+
     }
 
+    /**
+     * Get the custom parameters passed by the user.
+     *
+     * @param paramMap Parameters passed by the user.
+     * @return Custom parameters passed by the user.
+     */
     public static Map<String, Object> getPassedCustomParams(Object[] paramMap) {
 
         Map<String, Object> passedCustomParams = null;
@@ -158,7 +175,7 @@ public class Util {
         return apiKey;
     }
 
-    static Map<String, String> getSiftConfigs(String tenantDomain) throws FrameworkException {
+    private static Map<String, String> getSiftConfigs(String tenantDomain) throws FrameworkException {
 
         try {
             ConnectorConfig connectorConfig =
@@ -179,6 +196,12 @@ public class Util {
 
     }
 
+    /**
+     * Mask the sensitive data in the payload before logging.
+     *
+     * @param payload Payload to be masked.
+     * @return Masked payload.
+     */
     public static String getMaskedSiftPayload(JSONObject payload) {
 
         JSONObject maskedPayload = new JSONObject(payload.toString());
@@ -263,6 +286,12 @@ public class Util {
         return null;
     }
 
+    /**
+     * Check whether logging is enabled.
+     *
+     * @param passedCustomParams Custom parameters passed by the user.
+     * @return True if logging is enabled.
+     */
     public static boolean isLoggingEnabled(Map<String, Object> passedCustomParams) {
 
         boolean isLoggingEnabled = false;

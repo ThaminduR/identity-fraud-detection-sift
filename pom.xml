@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  ~ Copyright (c) 2024, WSO2 LLC. (http://www.wso2.org).
+  ~ Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
   ~
   ~ WSO2 LLC. licenses this file to you under the Apache License,
   ~ Version 2.0 (the "License"); you may not use this file except
@@ -36,10 +36,10 @@
     <url>http://wso2.org</url>
 
     <scm>
-        <url>https://github.com/wso2-extensions/identity-conditional-auth-functions.git</url>
-        <developerConnection>scm:git:https://github.com/wso2-extensions/identity-conditional-auth-functions.git
+        <url>https://github.com/wso2-extensions/identity-fraud-detection-sift.git</url>
+        <developerConnection>scm:git:https://github.com/wso2-extensions/identity-fraud-detection-sift.git
         </developerConnection>
-        <connection>scm:git:https://github.com/wso2-extensions/identity-conditional-auth-functions.git</connection>
+        <connection>scm:git:https://github.com/wso2-extensions/identity-fraud-detection-sift.git</connection>
         <tag>HEAD</tag>
     </scm>
 
@@ -108,8 +108,8 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>org.jacoco.agent</artifactId>
                 <classifier>runtime</classifier>
-                <scope>test</scope>
                 <version>${jacoco.version}</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
