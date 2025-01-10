@@ -37,7 +37,7 @@ public class Constants {
     public static final String SIFT_API_KEY_PROP_DESC = "API key of the Sift account.";
     public static final String CONNECTOR_NAME = "sift-configuration";
     public static final String CONNECTOR_FRIENDLY_NAME = "Sift Configuration";
-    public static final String CONNECTOR_CATEGORY = "Other Settings";
+    public static final String CONNECTOR_CATEGORY = "Login Security";
     public static final String CONNECTOR_SUB_CATEGORY = "DEFAULT";
     public static final int CONNECTOR_ORDER = 0;
 
