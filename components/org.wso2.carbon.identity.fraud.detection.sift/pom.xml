@@ -94,6 +94,10 @@
                             org.wso2.carbon.identity.governance.*; version="${identity.governance.import.version.range}",
                             com.google.gson;version="${com.google.code.gson.osgi.version.range}",
                         </Import-Package>
+                        <DynamicImport-Package>
+                            org.graalvm.polyglot,
+                            org.graalvm.polyglot.proxy
+                        </DynamicImport-Package>
                     </instructions>
                 </configuration>
             </plugin>
