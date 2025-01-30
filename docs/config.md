@@ -18,7 +18,7 @@ The latest project artifacts can be downloaded from the Connector Store (https:/
 
 Once the connector is added successfully to WSO2 Identity Server, the Sift connector UI will be accessible from the Console, which enables developers to easily configure Sift for their organization by adding the API key.
 To do so,
-  1. In the WSO2 Console, go to `Login and Registration` section and click on `Sift Configuration`.
+  1. In the WSO2 Console, go to `Login and Registration` section and click on `Fraud Detection`.
 
 ![Configuring Sift in WSO2 Console](../images/wso2console.png)
 
@@ -58,7 +58,7 @@ var additionalParams = {
 
 ### Enable Logging
 
-Including `"isLoggingEnabled": true` as an additional parameter in the functions activates logging for Sift fraud detection. When used with `getSiftRiskScoreForLogin`, it logs the payload sent to Sift and the risk score returned by Sift, and when applied to `publishLoginEventToSift`, it logs the payload sent to Sift.
+Including `"loggingEnabled": true` as an additional parameter in the functions activates logging for Sift fraud detection. When used with `getSiftRiskScoreForLogin`, it logs the payload sent to Sift and the risk score returned by Sift, and when applied to `publishLoginEventToSift`, it logs the payload sent to Sift.
 
 ### Enable Sift fraud detection
 
