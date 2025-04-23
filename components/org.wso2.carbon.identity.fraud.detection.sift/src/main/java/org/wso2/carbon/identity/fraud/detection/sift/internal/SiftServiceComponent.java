@@ -35,6 +35,8 @@ import org.wso2.carbon.identity.fraud.detection.sift.HttpClientManager;
 import org.wso2.carbon.identity.fraud.detection.sift.SiftConnectorConfig;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunction;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.CallSiftOnLoginFunctionImpl;
+import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.GetSiftWorkflowDecisionFunction;
+import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.GetSiftWorkflowDecisionFunctionImpl;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.PublishLoginToSiftFunction;
 import org.wso2.carbon.identity.fraud.detection.sift.conditional.auth.functions.PublishLoginToSiftFunctionImpl;
 import org.wso2.carbon.identity.fraud.detection.sift.models.ConnectionConfig;
@@ -50,6 +52,7 @@ import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
 )
 public class SiftServiceComponent {
 
+    public static final String FUNC_GET_WORKFLOW_DECISION = "getSiftWorkflowDecision";
     public static final String FUNC_CALL_SIFT = "getSiftRiskScoreForLogin";
     public static final String FUNC_PUBLISH_LOGIN_TO_SIFT = "publishLoginEventToSift";
     private static final Log LOG = LogFactory.getLog(SiftServiceComponent.class);
@@ -63,9 +66,13 @@ public class SiftServiceComponent {
             httpClient = HttpClientManager.getInstance().getHttpClient(connectionConfig);
             JsFunctionRegistry jsFunctionRegistry = SiftDataHolder.getInstance().getJsFunctionRegistry();
             CallSiftOnLoginFunction getSiftRiskScoreForLogin = new CallSiftOnLoginFunctionImpl(httpClient);
+            GetSiftWorkflowDecisionFunction getSiftWorkflowDecisionFunction =
+                    new GetSiftWorkflowDecisionFunctionImpl(httpClient);
             PublishLoginToSiftFunction publishLoginToSiftFunction = new PublishLoginToSiftFunctionImpl(httpClient);
             jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, FUNC_CALL_SIFT,
                     getSiftRiskScoreForLogin);
+            jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, FUNC_GET_WORKFLOW_DECISION,
+                    getSiftWorkflowDecisionFunction);
             jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, FUNC_PUBLISH_LOGIN_TO_SIFT,
                     publishLoginToSiftFunction);
 
