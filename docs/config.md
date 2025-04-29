@@ -37,6 +37,17 @@ WSO2 Identity Server offers the following Sift-related functions that can be uti
     - `LoginStatus` - Whether the user authentication was successful or not. Accepted values `LOGIN_SUCCESS`, `LOGIN_FAILED`.
     - `AdditionalParameters` - Any additional parameters can be sent to Sift.
 
+**`getSiftWorkflowDecision()`**
+
+- This function returns the Sift decision ID for a given login event. The decision ID is a unique identifier for the decision selected for the login event during the workflow execution. 
+Workflows and decisions can be configured through the Sift console.
+- If an error occurs due to an invalid API key, network issue or a Sift server issue, this function returns a null value.
+- The function takes the following arguments.
+  - `AuthenticationContext` - current authentication context.
+  - `LoginStatus` - Whether the user authentication was successful or not. Accepted values `LOGIN_SUCCESS`, `LOGIN_FAILED`.
+  - `AdditionalParameters` - Any additional parameters can be sent to Sift.
+
+
 **`publishLoginEventInfoToSift`**
 
 - This function publishes the successful or failed login events to Sift. This informs Sift that the current login attempt was successful/failed.
@@ -68,7 +79,55 @@ To enable Sift fraud detection for your application:
 2. Go to the **Login Flow** tab of the application and enable **Conditional Authentication**.
 3. Add a conditional authentication script and Click **Update**.
 
-The following example conditional authentication script is for a scenario where the authentication fails if the risk score exceeds 0.5.
+## Examples
+
+### Workflow Based
+
+Workflows can be configured in the Sift console to define the decisions to be made based on various parameters, including the risk score.
+The getSiftWorkflowDecision function returns the decision ID configured in the Sift console.
+
+The following example conditional authentication script is for a scenario where,
+- The authentication fails if the decision id is "session_looks_bad_account_takeover".
+- Prompts for additional authentication if the decision id is "mfa_account_takeover".
+- Publishes a login fail event to Sift, if authentication fails.
+
+```javascript
+var additionalParams = {
+    "loggingEnabled": true,
+    "$user_agent": "",
+}
+var errorPage = '';
+var suspiciousLoginError = {
+    'status': 'Login Restricted',
+    'statusMsg': 'You login attempt was identified as suspicious.'
+};
+
+var onLoginRequest = function (context) {
+    executeStep(1, {
+        onSuccess: function (context) {
+            var workflowDecision = getSiftWorkflowDecision(context, "LOGIN_SUCCESS", additionalParams);
+            if (workflowDecision == null) {
+                console.log("Error occured while obtaining Sift score.");
+            }
+            if (workflowDecision == "session_looks_bad_account_takeover") {
+                sendError(errorPage, suspiciousLoginError);
+            } else if (workflowDecision == "mfa_account_takeover") {
+                executeStep(2);
+            }
+        },
+        onFail: function (context) {
+            publishLoginEventToSift(context, 'LOGIN_FAILED', additionalParams);
+        }
+    });
+};
+```
+
+### Risk Score Based
+
+The following example conditional authentication script is for a scenario where,
+- The authentication fails if the risk score exceeds 0.7.
+- Prompts for additional authentication if the risk score is between 0.5 and 0.7.
+- Publishes a login fail event to Sift, if authentication fails.
 
 ```javascript
 var additionalParams = {
@@ -85,20 +144,17 @@ var onLoginRequest = function (context) {
     executeStep(1, {
         onSuccess: function (context) {
             var riskScore = getSiftRiskScoreForLogin(context, "LOGIN_SUCCESS", additionalParams);
-            riskScore = riskScore
             if (riskScore == -1) {
                 console.log("Error occured while obtaining Sift score.");
             }
             if (riskScore > 0.7) {
-                publishLoginEventToSift(context, "LOGIN_FAILED", additionalParams);
                 sendError(errorPage, suspiciousLoginError);
             } else if (riskScore > 0.5) {
-                console.log("Success login. Stepping up due to the risk.");
                 executeStep(2);
-            } 
-            else {
-                publishLoginEventToSift(context, "LOGIN_SUCCESS", additionalParams);
             }
+        },
+        onFail: function (context) {
+            publishLoginEventToSift(context, 'LOGIN_FAILED', additionalParams);
         }
     });
 };
