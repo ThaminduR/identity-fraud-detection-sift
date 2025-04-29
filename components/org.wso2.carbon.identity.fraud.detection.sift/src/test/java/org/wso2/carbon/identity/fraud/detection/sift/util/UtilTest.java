@@ -56,7 +56,7 @@ import static org.testng.Assert.assertTrue;
  */
 public class UtilTest {
 
-    public static final String USER_ID = "user123";
+    public static final String USER_1 = "user123";
     public static final String SESSION_ID = "session123";
     public static final String IP_ADDRESS = "127.0.0.1";
     public static final String USER_AGENT = "Mozilla/5.0";
@@ -92,8 +92,9 @@ public class UtilTest {
         JsGraalAuthenticatedUser mockUser = mock(JsGraalAuthenticatedUser.class);
         AuthenticatedUser authenticatedUser = mock(AuthenticatedUser.class);
         when(mockUser.getWrapped()).thenReturn(authenticatedUser);
-        when(mockUser.getWrapped().getUserId()).thenReturn(USER_ID);
+        when(authenticatedUser.getUsernameAsSubjectIdentifier(true, true)).thenReturn(USER_1);
 
+        when(mockContext.getWrapped().getLastAuthenticatedUser()).thenReturn(authenticatedUser);
         when(mockContext.getMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(mockUser);
 
         HttpServletRequestWrapper httpServletRequestWrapper = mock(HttpServletRequestWrapper.class);
@@ -117,7 +118,7 @@ public class UtilTest {
         JSONObject payload = Util.buildPayload(mockContext, "LOGIN_SUCCESS", passedCustomParams);
         assertEquals(payload.getString(Constants.TYPE), Constants.LOGIN_TYPE);
         assertEquals(payload.getString(Constants.LOGIN_STATUS), "$success");
-        assertEquals(payload.getString(Constants.USER_ID_KEY), DigestUtils.sha256Hex(USER_ID));
+        assertEquals(payload.getString(Constants.USER_ID_KEY), DigestUtils.sha256Hex(USER_1));
         assertEquals(payload.getString(Constants.SESSION_ID_KEY), DigestUtils.sha256Hex(SESSION_ID));
         assertEquals(payload.getString(Constants.IP_KEY), IP_ADDRESS);
         assertEquals(payload.getJSONObject(Constants.BROWSER_KEY).getString(Constants.USER_AGENT_KEY), USER_AGENT);
@@ -139,8 +140,8 @@ public class UtilTest {
         JsGraalAuthenticatedUser mockUser = mock(JsGraalAuthenticatedUser.class);
         AuthenticatedUser authenticatedUser = mock(AuthenticatedUser.class);
         when(mockUser.getWrapped()).thenReturn(authenticatedUser);
-        when(mockUser.getWrapped().getUserId()).thenReturn(USER_ID);
-
+        when(authenticatedUser.getUsernameAsSubjectIdentifier(true, true)).thenReturn(USER_1);
+        when(mockContext.getWrapped().getLastAuthenticatedUser()).thenReturn(authenticatedUser);
         when(mockContext.getMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(mockUser);
 
         HttpServletRequestWrapper httpServletRequestWrapper = mock(HttpServletRequestWrapper.class);
@@ -192,8 +193,8 @@ public class UtilTest {
         JsGraalAuthenticatedUser mockUser = mock(JsGraalAuthenticatedUser.class);
         AuthenticatedUser authenticatedUser = mock(AuthenticatedUser.class);
         when(mockUser.getWrapped()).thenReturn(authenticatedUser);
-        when(mockUser.getWrapped().getUserId()).thenReturn(USER_ID);
-
+        when(authenticatedUser.getUsernameAsSubjectIdentifier(true, true)).thenReturn(USER_1);
+        when(mockContext.getWrapped().getLastAuthenticatedUser()).thenReturn(authenticatedUser);
         when(mockContext.getMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(mockUser);
 
         HttpServletRequestWrapper httpServletRequestWrapper = mock(HttpServletRequestWrapper.class);
@@ -221,7 +222,7 @@ public class UtilTest {
         JSONObject payload = Util.buildPayload(mockContext, "LOGIN_SUCCESS", passedCustomParams);
         assertEquals(payload.getString(Constants.TYPE), Constants.LOGIN_TYPE);
         assertEquals(payload.getString(Constants.LOGIN_STATUS), "$success");
-        assertEquals(payload.getString(Constants.USER_ID_KEY), DigestUtils.sha256Hex(USER_ID));
+        assertEquals(payload.getString(Constants.USER_ID_KEY), DigestUtils.sha256Hex(USER_1));
         assertEquals(payload.getString(Constants.SESSION_ID_KEY), DigestUtils.sha256Hex(SESSION_ID));
         assertEquals(payload.getString(Constants.IP_KEY), CUSTOM_IP_ADDRESS);
         assertEquals(payload.getJSONObject(Constants.BROWSER_KEY)

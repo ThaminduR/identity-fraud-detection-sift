@@ -28,6 +28,7 @@ public class Constants {
 
     public static final String SIFT_API_URL = "https://api.sift.com/v205/events?abuse_types=account_takeover";
     public static final String RETURN_SCORE_PARAM = "&return_score=true";
+    public static final String RETURN_WORKFLOW_PARAM = "&return_workflow_status=true";
 
     // Connector configs.
 
@@ -63,17 +64,29 @@ public class Constants {
     public static final String BROWSER_KEY = "$browser";
     public static final String USER_AGENT_KEY = "$user_agent";
 
+    // Sift specific keys.
     public static final int SIFT_STATUS_OK = 0;
     public static final String SIFT_STATUS = "status";
     public static final String SIFT_SCORE_RESPONSE = "score_response";
     public static final String SIFT_SCORES = "scores";
     public static final String SIFT_ACCOUNT_TAKEOVER = "account_takeover";
     public static final String SIFT_SCORE = "score";
+    public static final String SIFT_WORKFLOW_STATUSES = "workflow_statuses";
+    public static final String SIFT_ABUSE_TYPES = "abuse_types";
+    public static final String SIFT_ENTITY = "entity";
+    public static final String SIFT_TYPE = "type";
+    public static final String SIFT_SESSION = "session";
+    public static final String SIFT_HISTORY = "history";
+    public static final String SIFT_APP = "app";
+    public static final String SIFT_DECISION = "decision";
+    public static final String SIFT_CONFIG = "config";
+    public static final String SIFT_DECISION_ID = "decision_id";
 
     public static final String HTTP_SERVLET_REQUEST = "HttpServletRequest";
     public static final String USER_AGENT_HEADER = "User-Agent";
     public static final String CONTENT_TYPE_HEADER = "Content-Type";
     public static final String CURRENT_KNOWN_SUBJECT = "currentKnownSubject";
+    public static final String LAST_LOGIN_FAILED_USER = "lastLoginFailedUser";
 
     public static final String LOGGING_ENABLED = "loggingEnabled";
 
