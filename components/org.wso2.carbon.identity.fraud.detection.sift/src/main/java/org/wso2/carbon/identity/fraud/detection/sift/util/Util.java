@@ -27,7 +27,6 @@ import org.wso2.carbon.identity.application.authentication.framework.config.mode
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.graaljs.JsGraalAuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.context.TransientObjectWrapper;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
-import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.fraud.detection.sift.Constants;
 import org.wso2.carbon.identity.fraud.detection.sift.internal.SiftDataHolder;
@@ -41,7 +40,9 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_NAME;
+import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CURRENT_KNOWN_SUBJECT;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.HTTP_SERVLET_REQUEST;
+import static org.wso2.carbon.identity.fraud.detection.sift.Constants.LAST_LOGIN_FAILED_USER;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.LOGIN_TYPE;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_KEY_PROP;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.USER_AGENT_HEADER;
@@ -252,16 +253,23 @@ public class Util {
         }
     }
 
+    /**
+     * Hashed username is used as the user identifier and is qualified with both the user-store domain
+     * and the tenant domain. If the login attempt fails in the current step,
+     * the LAST_LOGIN_FAILED_USER is used instead.
+     *
+     * @param context Authentication context.
+     * @return Hashed user ID.
+     */
     private static String getHashedUserId(JsAuthenticationContext context) {
 
-        try {
-            String userId = ((JsGraalAuthenticatedUser) context.getMember(Constants.CURRENT_KNOWN_SUBJECT))
-                    .getWrapped().getUserId();
-            return DigestUtils.sha256Hex(userId);
-        } catch (UserIdNotFoundException e) {
-            LOG.debug("Unable to resolve the user id.", e);
-            return null;
+        String memberKey = CURRENT_KNOWN_SUBJECT;
+        if (context.getWrapped().getLastAuthenticatedUser() == null) {
+            memberKey = LAST_LOGIN_FAILED_USER;
         }
+        String userName = ((JsGraalAuthenticatedUser) context.getMember(memberKey)).getWrapped()
+                .getUsernameAsSubjectIdentifier(true, true);
+        return DigestUtils.sha256Hex(userName);
     }
 
     private static String getUserAgent(JsAuthenticationContext context) {

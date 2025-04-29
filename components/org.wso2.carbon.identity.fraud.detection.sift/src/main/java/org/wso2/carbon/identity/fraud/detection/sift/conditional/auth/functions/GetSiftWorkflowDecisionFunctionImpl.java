@@ -62,42 +62,41 @@ public class GetSiftWorkflowDecisionFunctionImpl implements GetSiftWorkflowDecis
     public String getSiftWorkFlowDecision(JsAuthenticationContext context, String loginStatus, Object... paramMap)
             throws FrameworkException {
 
-        HttpPost request = new HttpPost(Constants.SIFT_API_URL + Constants.RETURN_WORKFLOW_PARAM);
-        request.addHeader(Constants.CONTENT_TYPE_HEADER, FrameworkConstants.ContentTypes.TYPE_APPLICATION_JSON);
-
         Map<String, Object> passedCustomParams = Util.getPassedCustomParams(paramMap);
-
         boolean isLoggingEnabled = Util.isLoggingEnabled(passedCustomParams);
-
         JSONObject payload = Util.buildPayload(context, loginStatus, passedCustomParams);
 
         if (isLoggingEnabled) {
             LOG.info("Payload sent to Sift for workflow execution: " + getMaskedSiftPayload(payload));
         }
 
-        StringEntity entity = new StringEntity(payload.toString(), ContentType.APPLICATION_JSON);
-        request.setEntity(entity);
+        HttpPost request = new HttpPost(Constants.SIFT_API_URL + Constants.RETURN_WORKFLOW_PARAM);
+        request.addHeader(Constants.CONTENT_TYPE_HEADER, FrameworkConstants.ContentTypes.TYPE_APPLICATION_JSON);
+        request.setEntity(new StringEntity(payload.toString(), ContentType.APPLICATION_JSON));
 
         try (CloseableHttpResponse response = httpClient.execute(request)) {
 
-            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                LOG.error("Error occurred while getting the workflow status from Sift. HTTP Status code: " +
-                        response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpStatus.SC_OK) {
+                LOG.error("Error getting workflow status from Sift. HTTP Status code: " + statusCode);
                 return null;
             }
 
             HttpEntity responseEntity = response.getEntity();
             if (responseEntity == null) {
-                LOG.error("Error occurred while getting the workflow status from Sift. Response is null.");
+                LOG.error("Error getting workflow status from Sift. Response entity is null.");
                 return null;
             }
 
-            JSONObject jsonResponse = new JSONObject(new JSONTokener(new InputStreamReader(
-                    response.getEntity().getContent(), StandardCharsets.UTF_8)));
-            if (jsonResponse.has(Constants.SIFT_STATUS) &&
+            JSONObject jsonResponse;
+            try (InputStreamReader reader = new InputStreamReader(responseEntity.getContent(),
+                    StandardCharsets.UTF_8)) {
+                jsonResponse = new JSONObject(new JSONTokener(reader));
+            }
+
+            if (!jsonResponse.has(Constants.SIFT_STATUS) ||
                     jsonResponse.getInt(Constants.SIFT_STATUS) != Constants.SIFT_STATUS_OK) {
-                LOG.error("Error occurred from Sift while getting the workflow status. Received Sift status: " +
-                        jsonResponse.getInt(Constants.SIFT_STATUS));
+                LOG.error("Sift returned unsuccessful status: " + jsonResponse.optInt(Constants.SIFT_STATUS));
                 return null;
             }
 
@@ -107,7 +106,7 @@ public class GetSiftWorkflowDecisionFunctionImpl implements GetSiftWorkflowDecis
             if (workflowStatuses != null && workflowStatuses.length() > 0) {
                 for (int i = 0; i < workflowStatuses.length(); i++) {
                     JSONObject workflowStatus = workflowStatuses.optJSONObject(i);
-                    if (isATOAbuseType(workflowStatus) && isSessionType(workflowStatus)) {
+                    if (workflowStatus != null && isATOAbuseType(workflowStatus) && isSessionType(workflowStatus)) {
                         String workflowStatusId = getDecision(workflowStatus);
                         if (isLoggingEnabled) {
                             LOG.info("Sift workflow decision id: " + workflowStatusId);
