@@ -23,8 +23,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.StepConfig;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
-import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.graaljs.JsGraalAuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.context.TransientObjectWrapper;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.common.model.Property;
@@ -261,16 +262,38 @@ public class Util {
      * @param context Authentication context.
      * @return Hashed user ID.
      */
-    private static String getHashedUserId(JsAuthenticationContext context) {
+    private static String getHashedUserId(JsAuthenticationContext context) throws FrameworkException {
+
+
+        int currentStep = context.getWrapped().getCurrentStep();
+        StepConfig stepConfig = context.getWrapped().getSequenceConfig().getStepMap().get(currentStep);
+        if (stepConfig != null && stepConfig.getAuthenticatedUser() != null) {
+            String username = stepConfig.getAuthenticatedUser().getUsernameAsSubjectIdentifier(true, true);
+            if (StringUtils.isNotBlank(username)) {
+                return DigestUtils.sha256Hex(username);
+            }
+        }
 
         String memberKey = CURRENT_KNOWN_SUBJECT;
-        if (context.getWrapped().getLastAuthenticatedUser() == null) {
-            memberKey = LAST_LOGIN_FAILED_USER;
+        try {
+            if (context.getWrapped().getLastAuthenticatedUser() != null) {
+                memberKey = CURRENT_KNOWN_SUBJECT;
+            } else if (context.hasMember(LAST_LOGIN_FAILED_USER) && context.getMember(LAST_LOGIN_FAILED_USER) != null) {
+                memberKey = LAST_LOGIN_FAILED_USER;
+            } else if (context.hasMember(CURRENT_KNOWN_SUBJECT) && context.getMember(CURRENT_KNOWN_SUBJECT) != null) {
+                memberKey = CURRENT_KNOWN_SUBJECT;
+            }
+            JsAuthenticatedUser jsUser = (JsAuthenticatedUser) context.getMember(memberKey);
+            if (jsUser != null && jsUser.getWrapped() != null) {
+                String userName = jsUser.getWrapped().getUsernameAsSubjectIdentifier(true, true);
+                return DigestUtils.sha256Hex(userName);
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to get the user from the context using key: " + memberKey, e);
         }
-        String userName = ((JsGraalAuthenticatedUser) context.getMember(memberKey)).getWrapped()
-                .getUsernameAsSubjectIdentifier(true, true);
-        return DigestUtils.sha256Hex(userName);
+        throw new FrameworkException("Unable to resolve user ID from the context or step configuration.");
     }
+
 
     private static String getUserAgent(JsAuthenticationContext context) {
 
