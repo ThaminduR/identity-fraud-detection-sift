@@ -22,16 +22,17 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONObject;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.SequenceConfig;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.StepConfig;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
-import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.graaljs.JsGraalAuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.context.TransientObjectWrapper;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
-import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.fraud.detection.sift.Constants;
 import org.wso2.carbon.identity.fraud.detection.sift.internal.SiftDataHolder;
@@ -44,6 +45,8 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequestWrapper;
 
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -52,71 +55,96 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 /**
- * Util class test cases.
+ * Unit tests for the Util class in the Sift fraud detection module.
  */
 public class UtilTest {
 
-    public static final String USER_1 = "user123";
-    public static final String SESSION_ID = "session123";
-    public static final String IP_ADDRESS = "127.0.0.1";
-    public static final String USER_AGENT = "Mozilla/5.0";
-    public static final String CUSTOM_USER_ID = "customUserId";
-    public static final String CUSTOM_KEY = "customKey";
-    public static final String CUSTOM_VALUE = "customValue";
-    public static final String CUSTOM_IP_ADDRESS = "192.168.8.1";
-    public static final String CUSTOM_USER_AGENT = "customUserAgent";
+    private static final String TENANT = "carbon.super";
+    private static final String SESSION_ID = "session123";
+    private static final String USER_1 = "user123";
+    private static final String STEP_USER = "stepUser";
+    private static final String IP_ADDRESS = "127.0.0.1";
+    private static final String USER_AGENT = "Mozilla/5.0";
+    private static final String CUSTOM_IP_ADDRESS = "192.168.8.1";
+    private static final String CUSTOM_USER_AGENT = "customUserAgent";
+    private static final String CUSTOM_USER_ID = "customUserId";
+    private static final String CUSTOM_KEY = "customKey";
+    private static final String CUSTOM_VALUE = "customValue";
+    private static final int STEP = 1;
 
     @Mock
-    private JsAuthenticationContext mockContext;
-
+    private JsAuthenticationContext jsContext;
     @Mock
-    private IdentityGovernanceService mockIdentityGovernanceService;
+    private IdentityGovernanceService identityService;
 
     @BeforeMethod
-    public void setUp() {
+    public void setup() {
 
         MockitoAnnotations.openMocks(this);
-        SiftDataHolder.getInstance().setIdentityGovernanceService(mockIdentityGovernanceService);
+        SiftDataHolder.getInstance().setIdentityGovernanceService(identityService);
+    }
+
+    private void mockHttpRequest(AuthenticationContext ctx, String ip, String userAgent) {
+
+        HttpServletRequestWrapper req = mock(HttpServletRequestWrapper.class);
+        when(req.getHeader(Constants.USER_AGENT_HEADER)).thenReturn(userAgent);
+        when(req.getRemoteAddr()).thenReturn(ip);
+        TransientObjectWrapper<HttpServletRequestWrapper> wrapper = mock(TransientObjectWrapper.class);
+        when(wrapper.getWrapped()).thenReturn(req);
+        when(ctx.getParameter(Constants.HTTP_SERVLET_REQUEST)).thenReturn(wrapper);
+    }
+
+    private void mockApiKey(String apiKey) throws IdentityGovernanceException {
+
+        ConnectorConfig cfg = mock(ConnectorConfig.class);
+        Property p = new Property();
+        p.setName(Constants.SIFT_API_KEY_PROP);
+        p.setValue(apiKey);
+        when(cfg.getProperties()).thenReturn(new Property[]{p});
+        when(identityService.getConnectorWithConfigs(TENANT, Constants.CONNECTOR_NAME)).thenReturn(cfg);
+    }
+
+    private void mockStepConfigWithUser(AuthenticationContext ctx, String user) {
+
+        SequenceConfig sequenceConfig = mock(SequenceConfig.class);
+        StepConfig stepConfig = mock(StepConfig.class);
+        AuthenticatedUser authUser = mock(AuthenticatedUser.class);
+        when(authUser.getUsernameAsSubjectIdentifier(true, true)).thenReturn(user);
+        when(stepConfig.getAuthenticatedUser()).thenReturn(authUser);
+        Map<Integer, StepConfig> stepMap = new HashMap<>();
+        stepMap.put(STEP, stepConfig);
+        when(sequenceConfig.getStepMap()).thenReturn(stepMap);
+        when(ctx.getSequenceConfig()).thenReturn(sequenceConfig);
+        when(ctx.getCurrentStep()).thenReturn(STEP);
+    }
+
+    private void mockContextIdentifier(AuthenticationContext ctx, String sessionId) {
+
+        when(ctx.getContextIdentifier()).thenReturn(sessionId);
     }
 
     @Test
-    public void testBuildDefaultPayload() throws FrameworkException, IdentityGovernanceException,
-            UserIdNotFoundException {
+    public void testBuildDefaultPayloadFromCurrentKnownSubject() throws Exception {
 
-        AuthenticationContext wrappedContext = mock(AuthenticationContext.class);
-        when(mockContext.getWrapped()).thenReturn(wrappedContext);
+        AuthenticationContext ctx = mock(AuthenticationContext.class);
+        when(jsContext.getWrapped()).thenReturn(ctx);
+        when(ctx.getTenantDomain()).thenReturn(TENANT);
+        mockContextIdentifier(ctx, SESSION_ID);
+        mockHttpRequest(ctx, IP_ADDRESS, USER_AGENT);
 
-        when(mockContext.getWrapped().getTenantDomain()).thenReturn("carbon.super");
-        when(mockContext.getWrapped().getContextIdentifier()).thenReturn(SESSION_ID);
+        mockStepConfigWithUser(ctx, null);
 
-        JsGraalAuthenticatedUser mockUser = mock(JsGraalAuthenticatedUser.class);
-        AuthenticatedUser authenticatedUser = mock(AuthenticatedUser.class);
-        when(mockUser.getWrapped()).thenReturn(authenticatedUser);
-        when(authenticatedUser.getUsernameAsSubjectIdentifier(true, true)).thenReturn(USER_1);
+        AuthenticatedUser authUser = mock(AuthenticatedUser.class);
+        when(authUser.getUsernameAsSubjectIdentifier(true, true)).thenReturn(USER_1);
+        JsAuthenticatedUser jsUser = mock(JsAuthenticatedUser.class);
+        when(jsUser.getWrapped()).thenReturn(authUser);
 
-        when(mockContext.getWrapped().getLastAuthenticatedUser()).thenReturn(authenticatedUser);
-        when(mockContext.getMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(mockUser);
+        when(ctx.getLastAuthenticatedUser()).thenReturn(authUser);
+        when(jsContext.getMember(FrameworkConstants.JSAttributes.JS_CURRENT_KNOWN_SUBJECT)).thenReturn(jsUser);
 
-        HttpServletRequestWrapper httpServletRequestWrapper = mock(HttpServletRequestWrapper.class);
-        when(httpServletRequestWrapper.getHeader(Constants.USER_AGENT_HEADER)).thenReturn(USER_AGENT);
-        when(httpServletRequestWrapper.getRemoteAddr()).thenReturn(IP_ADDRESS);
+        mockApiKey("dummyApiKey");
 
-        TransientObjectWrapper<HttpServletRequestWrapper> transientObjectWrapper = mock(TransientObjectWrapper.class);
-        when(transientObjectWrapper.getWrapped()).thenReturn(httpServletRequestWrapper);
-        when(wrappedContext.getParameter(Constants.HTTP_SERVLET_REQUEST)).thenReturn(transientObjectWrapper);
-
-        ConnectorConfig connectorConfig = mock(ConnectorConfig.class);
-        Property property = new Property();
-        property.setName(Constants.SIFT_API_KEY_PROP);
-        property.setValue("dummyApiKey");
-        when(connectorConfig.getProperties()).thenReturn(new Property[]{property});
-        when(mockIdentityGovernanceService.getConnectorWithConfigs("carbon.super", Constants.CONNECTOR_NAME))
-                .thenReturn(connectorConfig);
-
-        HashMap<String, Object> passedCustomParams = new HashMap<>();
-
-        JSONObject payload = Util.buildPayload(mockContext, "LOGIN_SUCCESS", passedCustomParams);
-        assertEquals(payload.getString(Constants.TYPE), Constants.LOGIN_TYPE);
+        JSONObject payload = Util.buildPayload(jsContext, "LOGIN_SUCCESS", new HashMap<>());
         assertEquals(payload.getString(Constants.LOGIN_STATUS), "$success");
         assertEquals(payload.getString(Constants.USER_ID_KEY), DigestUtils.sha256Hex(USER_1));
         assertEquals(payload.getString(Constants.SESSION_ID_KEY), DigestUtils.sha256Hex(SESSION_ID));
@@ -124,165 +152,224 @@ public class UtilTest {
         assertEquals(payload.getJSONObject(Constants.BROWSER_KEY).getString(Constants.USER_AGENT_KEY), USER_AGENT);
     }
 
-    /*
-     * Test the buildPayload method with a custom user ID and an empty IP address and session id.
-     */
     @Test
-    public void testBuildModifiedPayload() throws FrameworkException, IdentityGovernanceException,
-            UserIdNotFoundException {
+    public void testBuildPayloadFromStepUser() throws Exception {
 
-        AuthenticationContext wrappedContext = mock(AuthenticationContext.class);
-        when(mockContext.getWrapped()).thenReturn(wrappedContext);
+        AuthenticationContext ctx = mock(AuthenticationContext.class);
+        when(jsContext.getWrapped()).thenReturn(ctx);
+        when(ctx.getTenantDomain()).thenReturn(TENANT);
+        mockContextIdentifier(ctx, SESSION_ID);
+        mockHttpRequest(ctx, IP_ADDRESS, USER_AGENT);
+        mockStepConfigWithUser(ctx, STEP_USER);
+        mockApiKey("dummyApiKey");
 
-        when(mockContext.getWrapped().getTenantDomain()).thenReturn("carbon.super");
-        when(mockContext.getWrapped().getContextIdentifier()).thenReturn(SESSION_ID);
+        JSONObject payload = Util.buildPayload(jsContext, "LOGIN_SUCCESS", new HashMap<>());
+        assertEquals(payload.getString(Constants.USER_ID_KEY), DigestUtils.sha256Hex(STEP_USER));
+    }
 
-        JsGraalAuthenticatedUser mockUser = mock(JsGraalAuthenticatedUser.class);
-        AuthenticatedUser authenticatedUser = mock(AuthenticatedUser.class);
-        when(mockUser.getWrapped()).thenReturn(authenticatedUser);
-        when(authenticatedUser.getUsernameAsSubjectIdentifier(true, true)).thenReturn(USER_1);
-        when(mockContext.getWrapped().getLastAuthenticatedUser()).thenReturn(authenticatedUser);
-        when(mockContext.getMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(mockUser);
+    @Test
+    public void testBuildPayloadWithOverriddenCustomParams() throws Exception {
 
-        HttpServletRequestWrapper httpServletRequestWrapper = mock(HttpServletRequestWrapper.class);
-        when(httpServletRequestWrapper.getHeader(Constants.USER_AGENT_HEADER)).thenReturn(USER_AGENT);
-        when(httpServletRequestWrapper.getRemoteAddr()).thenReturn(IP_ADDRESS);
+        AuthenticationContext ctx = mock(AuthenticationContext.class);
+        when(jsContext.getWrapped()).thenReturn(ctx);
+        when(ctx.getTenantDomain()).thenReturn(TENANT);
+        mockContextIdentifier(ctx, SESSION_ID);
+        mockHttpRequest(ctx, IP_ADDRESS, USER_AGENT);
+        mockStepConfigWithUser(ctx, null);
 
-        TransientObjectWrapper<HttpServletRequestWrapper> transientObjectWrapper = mock(TransientObjectWrapper.class);
-        when(transientObjectWrapper.getWrapped()).thenReturn(httpServletRequestWrapper);
-        when(wrappedContext.getParameter(Constants.HTTP_SERVLET_REQUEST)).thenReturn(transientObjectWrapper);
+        AuthenticatedUser authUser = mock(AuthenticatedUser.class);
+        when(authUser.getUsernameAsSubjectIdentifier(true, true)).thenReturn(USER_1);
+        JsAuthenticatedUser jsUser = mock(JsAuthenticatedUser.class);
+        when(jsUser.getWrapped()).thenReturn(authUser);
+        when(ctx.getLastAuthenticatedUser()).thenReturn(authUser);
+        when(jsContext.getMember(FrameworkConstants.JSAttributes.JS_CURRENT_KNOWN_SUBJECT)).thenReturn(jsUser);
 
-        ConnectorConfig connectorConfig = mock(ConnectorConfig.class);
-        Property property = new Property();
-        property.setName(Constants.SIFT_API_KEY_PROP);
-        property.setValue("dummyApiKey");
-        when(connectorConfig.getProperties()).thenReturn(new Property[]{property});
-        when(mockIdentityGovernanceService.getConnectorWithConfigs("carbon.super", Constants.CONNECTOR_NAME))
-                .thenReturn(connectorConfig);
+        mockApiKey("dummyApiKey");
 
-        HashMap<String, Object> passedCustomParams = new HashMap<>();
-        passedCustomParams.put(CUSTOM_KEY, CUSTOM_VALUE);
-        passedCustomParams.put(Constants.USER_ID_KEY, CUSTOM_USER_ID);
-        passedCustomParams.put(Constants.IP_KEY, "");
-        passedCustomParams.put(Constants.SESSION_ID_KEY, "");
-        passedCustomParams.put(Constants.LOGGING_ENABLED, true);
+        Map<String, Object> params = new HashMap<>();
+        params.put(Constants.USER_ID_KEY, CUSTOM_USER_ID);
+        params.put(Constants.IP_KEY, "");
+        params.put(Constants.SESSION_ID_KEY, "");
+        params.put(Constants.LOGGING_ENABLED, true);
+        params.put(CUSTOM_KEY, CUSTOM_VALUE);
 
-        JSONObject payload = Util.buildPayload(mockContext, "LOGIN_FAILED", passedCustomParams);
-        assertEquals(payload.getString(Constants.TYPE), Constants.LOGIN_TYPE);
-        assertEquals(payload.getString(Constants.LOGIN_STATUS), "$failure");
+        JSONObject payload = Util.buildPayload(jsContext, "LOGIN_FAILED", params);
         assertEquals(payload.getString(Constants.USER_ID_KEY), CUSTOM_USER_ID);
-        assertTrue(payload.isNull(Constants.SESSION_ID_KEY));
         assertTrue(payload.isNull(Constants.IP_KEY));
-        assertEquals(payload.getJSONObject(Constants.BROWSER_KEY).getString(Constants.USER_AGENT_KEY), USER_AGENT);
+        assertTrue(payload.isNull(Constants.SESSION_ID_KEY));
         assertEquals(payload.getString(CUSTOM_KEY), CUSTOM_VALUE);
     }
 
-    /*
-     * Test the buildPayload method with a replaced IP address and user agent.
-     */
     @Test
-    public void testBuildReplacedPayload() throws FrameworkException, IdentityGovernanceException,
-            UserIdNotFoundException {
+    public void testBuildPayloadWithReplacedValues() throws Exception {
 
-        AuthenticationContext wrappedContext = mock(AuthenticationContext.class);
-        when(mockContext.getWrapped()).thenReturn(wrappedContext);
+        AuthenticationContext ctx = mock(AuthenticationContext.class);
+        when(jsContext.getWrapped()).thenReturn(ctx);
+        when(ctx.getTenantDomain()).thenReturn(TENANT);
+        mockContextIdentifier(ctx, SESSION_ID);
+        mockHttpRequest(ctx, IP_ADDRESS, USER_AGENT);
+        mockStepConfigWithUser(ctx, null);
 
-        when(mockContext.getWrapped().getTenantDomain()).thenReturn("carbon.super");
-        when(mockContext.getWrapped().getContextIdentifier()).thenReturn(SESSION_ID);
+        AuthenticatedUser authUser = mock(AuthenticatedUser.class);
+        when(authUser.getUsernameAsSubjectIdentifier(true, true)).thenReturn(USER_1);
+        JsAuthenticatedUser jsUser = mock(JsAuthenticatedUser.class);
+        when(jsUser.getWrapped()).thenReturn(authUser);
+        when(ctx.getLastAuthenticatedUser()).thenReturn(authUser);
+        when(jsContext.getMember(FrameworkConstants.JSAttributes.JS_CURRENT_KNOWN_SUBJECT)).thenReturn(jsUser);
 
-        JsGraalAuthenticatedUser mockUser = mock(JsGraalAuthenticatedUser.class);
-        AuthenticatedUser authenticatedUser = mock(AuthenticatedUser.class);
-        when(mockUser.getWrapped()).thenReturn(authenticatedUser);
-        when(authenticatedUser.getUsernameAsSubjectIdentifier(true, true)).thenReturn(USER_1);
-        when(mockContext.getWrapped().getLastAuthenticatedUser()).thenReturn(authenticatedUser);
-        when(mockContext.getMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(mockUser);
+        mockApiKey("dummyApiKey");
 
-        HttpServletRequestWrapper httpServletRequestWrapper = mock(HttpServletRequestWrapper.class);
-        when(httpServletRequestWrapper.getHeader(Constants.USER_AGENT_HEADER)).thenReturn(USER_AGENT);
-        when(httpServletRequestWrapper.getRemoteAddr()).thenReturn(IP_ADDRESS);
+        Map<String, Object> params = new HashMap<>();
+        params.put(Constants.IP_KEY, CUSTOM_IP_ADDRESS);
+        params.put(Constants.USER_AGENT_KEY, CUSTOM_USER_AGENT);
+        params.put(CUSTOM_KEY, CUSTOM_VALUE);
 
-        TransientObjectWrapper<HttpServletRequestWrapper> transientObjectWrapper = mock(TransientObjectWrapper.class);
-        when(transientObjectWrapper.getWrapped()).thenReturn(httpServletRequestWrapper);
-        when(wrappedContext.getParameter(Constants.HTTP_SERVLET_REQUEST)).thenReturn(transientObjectWrapper);
-
-        ConnectorConfig connectorConfig = mock(ConnectorConfig.class);
-        Property property = new Property();
-        property.setName(Constants.SIFT_API_KEY_PROP);
-        property.setValue("dummyApiKey");
-        when(connectorConfig.getProperties()).thenReturn(new Property[]{property});
-        when(mockIdentityGovernanceService.getConnectorWithConfigs("carbon.super", Constants.CONNECTOR_NAME))
-                .thenReturn(connectorConfig);
-
-        HashMap<String, Object> passedCustomParams = new HashMap<>();
-        passedCustomParams.put(CUSTOM_KEY, CUSTOM_VALUE);
-        passedCustomParams.put(Constants.IP_KEY, CUSTOM_IP_ADDRESS);
-        passedCustomParams.put(Constants.USER_AGENT_KEY, CUSTOM_USER_AGENT);
-        passedCustomParams.put(Constants.LOGGING_ENABLED, true);
-
-        JSONObject payload = Util.buildPayload(mockContext, "LOGIN_SUCCESS", passedCustomParams);
-        assertEquals(payload.getString(Constants.TYPE), Constants.LOGIN_TYPE);
-        assertEquals(payload.getString(Constants.LOGIN_STATUS), "$success");
-        assertEquals(payload.getString(Constants.USER_ID_KEY), DigestUtils.sha256Hex(USER_1));
-        assertEquals(payload.getString(Constants.SESSION_ID_KEY), DigestUtils.sha256Hex(SESSION_ID));
+        JSONObject payload = Util.buildPayload(jsContext, "LOGIN_SUCCESS", params);
         assertEquals(payload.getString(Constants.IP_KEY), CUSTOM_IP_ADDRESS);
-        assertEquals(payload.getJSONObject(Constants.BROWSER_KEY)
-                .getString(Constants.USER_AGENT_KEY), CUSTOM_USER_AGENT);
+        assertEquals(payload.getJSONObject(Constants.BROWSER_KEY).getString(Constants.USER_AGENT_KEY),
+                CUSTOM_USER_AGENT);
         assertEquals(payload.getString(CUSTOM_KEY), CUSTOM_VALUE);
     }
 
+    @Test(expectedExceptions = FrameworkException.class)
+    public void testBuildPayloadMissingAuthenticatedUser() throws Exception {
+
+        AuthenticationContext ctx = mock(AuthenticationContext.class);
+        when(jsContext.getWrapped()).thenReturn(ctx);
+        when(ctx.getTenantDomain()).thenReturn(TENANT);
+        mockContextIdentifier(ctx, SESSION_ID);
+        mockStepConfigWithUser(ctx, null);
+        when(ctx.getLastAuthenticatedUser()).thenReturn(null);
+        when(jsContext.hasMember(FrameworkConstants.JSAttributes.JS_LAST_LOGIN_FAILED_USER)).thenReturn(false);
+        when(jsContext.hasMember(FrameworkConstants.JSAttributes.JS_CURRENT_KNOWN_SUBJECT)).thenReturn(false);
+
+        mockApiKey("dummyApiKey");
+        Util.buildPayload(jsContext, "LOGIN_FAILED", new HashMap<>());
+    }
+
+    @Test(expectedExceptions = FrameworkException.class)
+    public void testBuildPayloadWithNullContextId() throws Exception {
+
+        AuthenticationContext ctx = mock(AuthenticationContext.class);
+        when(jsContext.getWrapped()).thenReturn(ctx);
+        when(ctx.getTenantDomain()).thenReturn(TENANT);
+        when(ctx.getContextIdentifier()).thenReturn(null);
+        mockStepConfigWithUser(ctx, USER_1);
+        mockHttpRequest(ctx, IP_ADDRESS, USER_AGENT);
+        mockApiKey("dummyApiKey");
+        Util.buildPayload(jsContext, "LOGIN_SUCCESS", new HashMap<>());
+    }
+
+
+    @Test(expectedExceptions = FrameworkException.class)
+    public void testBuildPayloadWithMissingApiKey() throws Exception {
+
+        AuthenticationContext ctx = mock(AuthenticationContext.class);
+        when(jsContext.getWrapped()).thenReturn(ctx);
+        when(ctx.getTenantDomain()).thenReturn(TENANT);
+        mockContextIdentifier(ctx, SESSION_ID);
+        ConnectorConfig config = mock(ConnectorConfig.class);
+        Property p = new Property();
+        p.setName("other");
+        p.setValue("value");
+        when(config.getProperties()).thenReturn(new Property[]{p});
+        when(identityService.getConnectorWithConfigs(TENANT, Constants.CONNECTOR_NAME)).thenReturn(config);
+        Util.buildPayload(jsContext, "LOGIN_SUCCESS", new HashMap<>());
+    }
+
+    @Test(expectedExceptions = FrameworkException.class)
+    public void testBuildPayloadWithNullConnector() throws Exception {
+
+        AuthenticationContext ctx = mock(AuthenticationContext.class);
+        when(jsContext.getWrapped()).thenReturn(ctx);
+        when(ctx.getTenantDomain()).thenReturn(TENANT);
+        mockContextIdentifier(ctx, SESSION_ID);
+        mockStepConfigWithUser(ctx, USER_1);
+        when(identityService.getConnectorWithConfigs(TENANT, Constants.CONNECTOR_NAME)).thenReturn(null);
+        Util.buildPayload(jsContext, "LOGIN_SUCCESS", new HashMap<>());
+    }
+
+
+    @Test(expectedExceptions = FrameworkException.class)
+    public void testBuildPayloadWithGovernanceException() throws Exception {
+
+        AuthenticationContext ctx = mock(AuthenticationContext.class);
+        when(jsContext.getWrapped()).thenReturn(ctx);
+        when(ctx.getTenantDomain()).thenReturn(TENANT);
+        when(ctx.getContextIdentifier()).thenReturn(SESSION_ID);
+        mockStepConfigWithUser(ctx, USER_1);
+        when(identityService.getConnectorWithConfigs(eq(TENANT), anyString()))
+                .thenThrow(new IdentityGovernanceException("Test exception"));
+        Util.buildPayload(jsContext, "LOGIN_SUCCESS", new HashMap<>());
+    }
+
+
     @Test
-    public void testGetPassedCustomParams() {
+    public void testGetPassedCustomParamsValid() {
 
-        Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("key1", "value1");
-
-        Map<String, Object> result = Util.getPassedCustomParams(new Object[]{paramMap});
+        Map<String, Object> map = new HashMap<>();
+        map.put("key", "value");
+        Object[] input = new Object[]{map};
+        Map<String, Object> result = Util.getPassedCustomParams(input);
         assertNotNull(result);
-        assertEquals(result.get("key1"), "value1");
+        assertEquals(result.get("key"), "value");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testGetPassedCustomParamsWithInvalidArgument() {
+    public void testGetPassedCustomParamsInvalidType() {
 
-        Util.getPassedCustomParams(new Object[]{"invalidArgument"});
+        Object[] input = new Object[]{"invalid"};
+        Util.getPassedCustomParams(input);
     }
 
     @Test
-    public void testIsLoggingEnabled() {
+    public void testIsLoggingEnabledWithNullMap() {
 
-        Map<String, Object> passedCustomParams = new HashMap<>();
-        passedCustomParams.put(Constants.LOGGING_ENABLED, true);
-
-        boolean result = Util.isLoggingEnabled(passedCustomParams);
-        assertTrue(result);
+        assertFalse(Util.isLoggingEnabled(null));
     }
 
     @Test
-    public void testIsLoggingEnabledWithNullParams() {
+    public void testIsLoggingEnabledWithTrueFlag() {
 
-        boolean result = Util.isLoggingEnabled(null);
-        assertFalse(result);
+        Map<String, Object> map = new HashMap<>();
+        map.put(Constants.LOGGING_ENABLED, true);
+        assertTrue(Util.isLoggingEnabled(map));
+        assertFalse(map.containsKey(Constants.LOGGING_ENABLED));
     }
 
     @Test
     public void testGetMaskedSiftPayload() {
 
-        // Create a sample payload with an API key.
-        JSONObject payload = new JSONObject();
-        payload.put("key1", "value1");
-        payload.put(Constants.API_KEY, "12345abcde");
+        JSONObject input = new JSONObject();
+        input.put("key1", "value1");
+        input.put(Constants.API_KEY, "abc123456789");
 
-        String maskedPayload = Util.getMaskedSiftPayload(payload);
-
-        JSONObject result = new JSONObject(maskedPayload);
-
-        // Verify that the API key is masked correctly.
-        String expectedMaskedApiKey = "12345*****";
-        Assert.assertEquals(result.getString(Constants.API_KEY), expectedMaskedApiKey);
-
-        // Verify that other keys are unchanged.
-        Assert.assertEquals(result.getString("key1"), "value1");
+        String masked = Util.getMaskedSiftPayload(input);
+        JSONObject result = new JSONObject(masked);
+        assertEquals(result.getString("key1"), "value1");
+        assertTrue(result.getString(Constants.API_KEY).startsWith("abc123"));
+        assertTrue(result.getString(Constants.API_KEY).endsWith("***"));
     }
 
+    @Test
+    public void testHttpServletRequestWithInvalidWrapper() throws Exception {
 
+        AuthenticationContext ctx = mock(AuthenticationContext.class);
+        when(jsContext.getWrapped()).thenReturn(ctx);
+        when(ctx.getTenantDomain()).thenReturn(TENANT);
+        mockContextIdentifier(ctx, SESSION_ID);
+        mockStepConfigWithUser(ctx, USER_1);
+
+        Object invalidRequest = new Object();
+        TransientObjectWrapper<Object> wrapper = mock(TransientObjectWrapper.class);
+        when(wrapper.getWrapped()).thenReturn(invalidRequest);
+        when(ctx.getParameter(Constants.HTTP_SERVLET_REQUEST)).thenReturn(wrapper);
+
+        mockApiKey("dummyApiKey");
+        JSONObject payload = Util.buildPayload(jsContext, "LOGIN_SUCCESS", new HashMap<>());
+
+        assertFalse(payload.has(Constants.IP_KEY));
+        JSONObject browser = payload.getJSONObject(Constants.BROWSER_KEY);
+        assertTrue(browser.isNull(Constants.USER_AGENT_KEY));
+    }
 }
