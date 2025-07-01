@@ -26,6 +26,7 @@ import org.json.JSONObject;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.StepConfig;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
+import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.context.TransientObjectWrapper;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.common.model.Property;
@@ -40,10 +41,10 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequestWrapper;
 
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.JSAttributes.JS_CURRENT_KNOWN_SUBJECT;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.JSAttributes.JS_LAST_LOGIN_FAILED_USER;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CONNECTOR_NAME;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.CURRENT_KNOWN_SUBJECT;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.HTTP_SERVLET_REQUEST;
-import static org.wso2.carbon.identity.fraud.detection.sift.Constants.LAST_LOGIN_FAILED_USER;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.LOGIN_TYPE;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.SIFT_API_KEY_PROP;
 import static org.wso2.carbon.identity.fraud.detection.sift.Constants.USER_AGENT_HEADER;
@@ -259,14 +260,15 @@ public class Util {
      * and the tenant domain. If the login attempt fails in the current step,
      * the LAST_LOGIN_FAILED_USER is used instead.
      *
-     * @param context Authentication context.
+     * @param ctx Authentication ctx.
      * @return Hashed user ID.
      */
-    private static String getHashedUserId(JsAuthenticationContext context) throws FrameworkException {
+    private static String getHashedUserId(JsAuthenticationContext ctx) throws FrameworkException {
 
 
-        int currentStep = context.getWrapped().getCurrentStep();
-        StepConfig stepConfig = context.getWrapped().getSequenceConfig().getStepMap().get(currentStep);
+        AuthenticationContext authenticationContext = ctx.getWrapped();
+        int currentStep = authenticationContext.getCurrentStep();
+        StepConfig stepConfig = authenticationContext.getSequenceConfig().getStepMap().get(currentStep);
         if (stepConfig != null && stepConfig.getAuthenticatedUser() != null) {
             String username = stepConfig.getAuthenticatedUser().getUsernameAsSubjectIdentifier(true, true);
             if (StringUtils.isNotBlank(username)) {
@@ -274,24 +276,24 @@ public class Util {
             }
         }
 
-        String memberKey = CURRENT_KNOWN_SUBJECT;
+        String memberKey = JS_CURRENT_KNOWN_SUBJECT;
         try {
-            if (context.getWrapped().getLastAuthenticatedUser() != null) {
-                memberKey = CURRENT_KNOWN_SUBJECT;
-            } else if (context.hasMember(LAST_LOGIN_FAILED_USER) && context.getMember(LAST_LOGIN_FAILED_USER) != null) {
-                memberKey = LAST_LOGIN_FAILED_USER;
-            } else if (context.hasMember(CURRENT_KNOWN_SUBJECT) && context.getMember(CURRENT_KNOWN_SUBJECT) != null) {
-                memberKey = CURRENT_KNOWN_SUBJECT;
+            if (authenticationContext.getLastAuthenticatedUser() != null) {
+                memberKey = JS_CURRENT_KNOWN_SUBJECT;
+            } else if (ctx.hasMember(JS_LAST_LOGIN_FAILED_USER) && ctx.getMember(JS_LAST_LOGIN_FAILED_USER) != null) {
+                memberKey = JS_LAST_LOGIN_FAILED_USER;
+            } else if (ctx.hasMember(JS_CURRENT_KNOWN_SUBJECT) && ctx.getMember(JS_CURRENT_KNOWN_SUBJECT) != null) {
+                memberKey = JS_CURRENT_KNOWN_SUBJECT;
             }
-            JsAuthenticatedUser jsUser = (JsAuthenticatedUser) context.getMember(memberKey);
+            JsAuthenticatedUser jsUser = (JsAuthenticatedUser) ctx.getMember(memberKey);
             if (jsUser != null && jsUser.getWrapped() != null) {
                 String userName = jsUser.getWrapped().getUsernameAsSubjectIdentifier(true, true);
                 return DigestUtils.sha256Hex(userName);
             }
         } catch (Exception e) {
-            LOG.error("Failed to get the user from the context using key: " + memberKey, e);
+            LOG.error("Failed to get the user from the ctx using key: " + memberKey, e);
         }
-        throw new FrameworkException("Unable to resolve user ID from the context or step configuration.");
+        throw new FrameworkException("Unable to resolve user ID from the ctx or step configuration.");
     }
 
 

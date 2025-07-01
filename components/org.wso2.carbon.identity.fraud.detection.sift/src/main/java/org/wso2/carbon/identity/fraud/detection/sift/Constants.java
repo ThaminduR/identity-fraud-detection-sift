@@ -85,8 +85,6 @@ public class Constants {
     public static final String HTTP_SERVLET_REQUEST = "HttpServletRequest";
     public static final String USER_AGENT_HEADER = "User-Agent";
     public static final String CONTENT_TYPE_HEADER = "Content-Type";
-    public static final String CURRENT_KNOWN_SUBJECT = "currentKnownSubject";
-    public static final String LAST_LOGIN_FAILED_USER = "lastLoginFailedUser";
 
     public static final String LOGGING_ENABLED = "loggingEnabled";
 

@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.application.authentication.framework.context.Aut
 import org.wso2.carbon.identity.application.authentication.framework.context.TransientObjectWrapper;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.fraud.detection.sift.Constants;
 import org.wso2.carbon.identity.fraud.detection.sift.internal.SiftDataHolder;
@@ -139,7 +140,7 @@ public class UtilTest {
         when(jsUser.getWrapped()).thenReturn(authUser);
 
         when(ctx.getLastAuthenticatedUser()).thenReturn(authUser);
-        when(jsContext.getMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(jsUser);
+        when(jsContext.getMember(FrameworkConstants.JSAttributes.JS_CURRENT_KNOWN_SUBJECT)).thenReturn(jsUser);
 
         mockApiKey("dummyApiKey");
 
@@ -181,7 +182,7 @@ public class UtilTest {
         JsAuthenticatedUser jsUser = mock(JsAuthenticatedUser.class);
         when(jsUser.getWrapped()).thenReturn(authUser);
         when(ctx.getLastAuthenticatedUser()).thenReturn(authUser);
-        when(jsContext.getMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(jsUser);
+        when(jsContext.getMember(FrameworkConstants.JSAttributes.JS_CURRENT_KNOWN_SUBJECT)).thenReturn(jsUser);
 
         mockApiKey("dummyApiKey");
 
@@ -214,7 +215,7 @@ public class UtilTest {
         JsAuthenticatedUser jsUser = mock(JsAuthenticatedUser.class);
         when(jsUser.getWrapped()).thenReturn(authUser);
         when(ctx.getLastAuthenticatedUser()).thenReturn(authUser);
-        when(jsContext.getMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(jsUser);
+        when(jsContext.getMember(FrameworkConstants.JSAttributes.JS_CURRENT_KNOWN_SUBJECT)).thenReturn(jsUser);
 
         mockApiKey("dummyApiKey");
 
@@ -239,8 +240,8 @@ public class UtilTest {
         mockContextIdentifier(ctx, SESSION_ID);
         mockStepConfigWithUser(ctx, null);
         when(ctx.getLastAuthenticatedUser()).thenReturn(null);
-        when(jsContext.hasMember(Constants.LAST_LOGIN_FAILED_USER)).thenReturn(false);
-        when(jsContext.hasMember(Constants.CURRENT_KNOWN_SUBJECT)).thenReturn(false);
+        when(jsContext.hasMember(FrameworkConstants.JSAttributes.JS_LAST_LOGIN_FAILED_USER)).thenReturn(false);
+        when(jsContext.hasMember(FrameworkConstants.JSAttributes.JS_CURRENT_KNOWN_SUBJECT)).thenReturn(false);
 
         mockApiKey("dummyApiKey");
         Util.buildPayload(jsContext, "LOGIN_FAILED", new HashMap<>());
